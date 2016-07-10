@@ -1,0 +1,8 @@
+update pitches set pitcher_success=0 where description like "%ball%";
+update pitches set pitcher_success=1 where description like "%foul%";
+update pitches set pitcher_success=0 where description="In play, run(s)";
+update pitches set pitcher_success=1 where description="In play, out(s)";
+update pitches set pitcher_success=0 where description="Hit By Pitch";
+update pitches set pitcher_success=NULL where description="Intent Ball";
+update pitches set pitcher_success=0 where description="In play, no out";
+update pitches set pitcher_success=1 where description like "%strike%";
