@@ -26,7 +26,7 @@ while (my $row = $csv->getline ($fh)) {
 		next;
 	}
 
-	my $query = "insert into players(name, pid) values(?,?)";
+	my $query = "insert into players(name, pid, position, team) values(?,?,?,?)";
 	my $statement = $dbh->prepare($query);
-	$statement->execute($row->[1], $row->[0]);
+	$statement->execute($row->[1], $row->[0], $row->[2], $row->[3]);
 }
