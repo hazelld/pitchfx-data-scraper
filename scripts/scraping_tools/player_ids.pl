@@ -7,8 +7,8 @@ use warnings;
 use Text::CSV;
 use DBI;
 
-
-my $fname = "players.csv";
+my $dir = "data/"
+my $fname = $dir . "players.csv";
 
 my @rows;
 my $csv = Text::CSV->new({ binary => 1 })
