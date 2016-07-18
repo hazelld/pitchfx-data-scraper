@@ -18,15 +18,46 @@
 
 use DBI;
 use WWW::Mechanize;
-use HTML::Parser();
+use WWW::Mechanize::TreeBuilder;
+use Data::Dumper;
+
+use strict;
+use warnings; 
 
 my ($month, $day) = @ARGV;
 my $year = "2016";
-my $site = "www.baseballpress.com/lineups/" .$year."-".$month."-".$day;
+my $site = "http://www.baseballpress.com/lineups/" .$year."-".$month."-".$day;
 
+print "Getting $site...\n";
 # Get our site 
 my $mech = WWW::Mechanize->new( autocheck => 0 );
+WWW::Mechanize::TreeBuilder->meta->apply($mech);
 $mech->get($site);
 
+#	Get each matchup, seems to be encapsulated in the class "game clearfix"
+my @matchups = $mech->look_down(_tag => "div", class => "game clearfix");
 
+foreach my $matchup (@matchups) {
+	my @players = $matchup->look_down(_tag => "a", class=>"player-link");
+	
+	# Get the pitcher's info 
+	my $home_pitcher    = $players[0]->as_text();
+	my $home_pitcher_id = $players[0]->attr("data-mlb"); 
+	my $away_pitcher    = $players[1]->as_text();
+	my $away_pitcher_id = $players[1]->attr("data-mlb");
+	
+	my @home_lineup     = @players[2..10];
+	my @away_lineup     = @players[11..19];
+
+	#	Insert into the database with the following info:
+	#	pid, bid, completed=0
+	foreach my $home_player (@home_lineup) {
+		print "Matchup: $away_pitcher v" . $home_player->as_text(). "\n";
+	}	
+	
+	foreach my $away_player (@away_lineup) {
+		print "Matchup: $home_pitcher v " . $away_player->as_text() . "\n";
+	}	
+	print "\n\n\n";
+}
 
