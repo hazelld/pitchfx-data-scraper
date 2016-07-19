@@ -37,6 +37,10 @@ $mech->get($site);
 #	Get each matchup, seems to be encapsulated in the class "game clearfix"
 my @matchups = $mech->look_down(_tag => "div", class => "game clearfix");
 
+#	Try to connect to the database
+my $dbh = DBI->connect('DBI:mysql:test')
+	or die "Couldn't connect to database: " . DBI->errstr;
+
 foreach my $matchup (@matchups) {
 	my @players = $matchup->look_down(_tag => "a", class=>"player-link");
 	
@@ -51,13 +55,17 @@ foreach my $matchup (@matchups) {
 
 	#	Insert into the database with the following info:
 	#	pid, bid, completed=0
+	#
 	foreach my $home_player (@home_lineup) {
-		print "Matchup: $away_pitcher v" . $home_player->as_text(). "\n";
+		my $query = "insert into matchups (completed, pid, bid) values (?,?,?)";
+		my $statement = $dbh->prepare($query);
+		$statement->execute(0, $away_pitcher_id, $home_player->attr("data-mlb"));
 	}	
 	
 	foreach my $away_player (@away_lineup) {
-		print "Matchup: $home_pitcher v " . $away_player->as_text() . "\n";
+		my $query = "insert into matchups (completed, pid, bid) values (?,?,?)";
+		my $statement = $dbh->prepare($query);
+		$statement->execute(0, $home_pitcher_id, $away_player->attr("data-mlb"));
 	}	
-	print "\n\n\n";
 }
 
