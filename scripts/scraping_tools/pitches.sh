@@ -13,6 +13,10 @@ while [ $current_year -lt $end_year ]; do
 			perl pitches.pl $current_year 0$i
 		fi
 	done
-
+	
 	let "current_year+=1"
 done
+
+perl pitches.pl 2016 04
+perl pitches.pl 2016 05
+perl pitches.pl 2016 06

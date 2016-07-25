@@ -7,7 +7,7 @@ use warnings;
 use Text::CSV;
 use DBI;
 
-my $dir = "data/"
+my $dir = "data/";
 my $fname = $dir . "players.csv";
 
 my @rows;
