@@ -40,9 +40,14 @@ for (i in bid_arr) {
 	b_data = fetch(b, n=-1)
 
 	res  <- predict(svm_p, b_data, probability=TRUE)
-	print(summary(res))
-	cat("\n\n")
+	mean <- mean(res)
+	med  <- median(res)
+
+	insert_query <- paste( "update matchups set ev=", mean, ", ev_med=", med, "where pid=", pid, "and bid=", i, "and completed=0")
+	dbGetQuery(db, insert_query)
 }
+
+dbGetQuery(db, "update matchups set completed=1 where completed=0")
 
 #cat("Writing to file")
 #fh <-file("Results.txt")
