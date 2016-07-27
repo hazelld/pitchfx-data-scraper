@@ -44,17 +44,41 @@ foreach my $ts ($te->tables()) {
 	}
 }
 
-#foreach my $player (@master_arr) {
-#	foreach (@$player) {
-#		print $_ . "\t";
-#	}
-#	print "\n";
-#}
+my $dbh = DBI->connect('DBI:mysql:mlb_stats')
+     or die "Couldn't connect to database: " . DBI->errstr;
+
+
+#	Get the IDs from the db based on the scraped name
+foreach my $player (@master_arr) {
+	if (!defined $player->[0]) { next; }
+	my $player_name = $player->[0];
+	$player_name =~ tr/^//d;
+	$player_name =~ tr/[0-9]//d;
+
+	my $q = "select pid from players where name=?";
+	my $s = $dbh->prepare($q);
+	$s->execute($player_name);
+
+	my ($id) = $s->fetchrow_array;
+
+	push @$player, $id if defined $id;
+
+	# Turn salary into int
+	$player->[2] =~ tr/$//d;
+	$player->[2] =~ tr/,//d;
+
+	my $bq = "update matchups set batter_salary=?, batter_fp=? where bid=? and completed=0";
+	my $sb = $dbh->prepare($bq);
+	$sb->execute($player->[2], $player->[1], $player->[3]);
+
+	my $pq = "update matchups set pitcher_salary=?, pitcher_fp=? where pid=? and completed=0";
+	my $pb = $dbh->prepare($pq);
+	$pb->execute($player->[2], $player->[1], $player->[3]);
+}
 
 #	Next steps:
-#		-> Replace Name with ID (using players.sql)
 #		-> Check if player has open matchup in the database
 #		-> If so, enter the fantasy points 
 #		-> Once all players have been updated, close the matchup in 
 #		   the database (completed=1)
-#
+

@@ -38,7 +38,7 @@ $mech->get($site);
 my @matchups = $mech->look_down(_tag => "div", class => "game clearfix");
 
 #	Try to connect to the database
-my $dbh = DBI->connect('DBI:mysql:test')
+my $dbh = DBI->connect('DBI:mysql:mlb_stats')
 	or die "Couldn't connect to database: " . DBI->errstr;
 
 foreach my $matchup (@matchups) {

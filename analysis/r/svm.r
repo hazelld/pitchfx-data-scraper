@@ -47,7 +47,6 @@ for (i in bid_arr) {
 	dbGetQuery(db, insert_query)
 }
 
-dbGetQuery(db, "update matchups set completed=1 where completed=0")
 
 #cat("Writing to file")
 #fh <-file("Results.txt")
