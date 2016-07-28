@@ -43,7 +43,7 @@ for (i in bid_arr) {
 	mean <- mean(res)
 	med  <- median(res)
 
-	insert_query <- paste( "update matchups set ev=", mean, ", ev_med=", med, "where pid=", pid, "and bid=", i, "and completed=0")
+	insert_query <- paste( "update matchups set ev=", mean, ", ev_median=", med, "where pid=", pid, "and bid=", i, "and completed=0")
 	dbGetQuery(db, insert_query)
 }
 
