@@ -9,11 +9,11 @@ library(e1071)
 
 # Connect to database
 db = dbConnect(MySQL(), user='whaze', password='', dbname='mlb_stats', host='127.0.0.1')
-query = "select balls,strikes,outs,start_speed,end_speed,px,pz,pfx_x,pfx_z,break_y,break_angle,break_length,spin_dir,spin_rate"
+query = "select balls,strikes,start_speed,px,pz,pfx_x,pfx_z,break_y,break_angle,break_length,spin_dir,spin_rate"
 
 
 # Get pitcher data (Training Data)
-pitcher_query = paste(query, ",pitcher_success from pitches where pitcher_id=", pid, sep=" ")
+pitcher_query = paste(query, ",pitcher_success from pitches where pitcher_id=", pid, "and pitcher_success!=0", sep=" ")
 print (pitcher_query)
 p  = dbSendQuery(db, pitcher_query)
 p_data = fetch(p, n=-1)
