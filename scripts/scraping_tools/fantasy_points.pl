@@ -82,3 +82,4 @@ foreach my $player (@master_arr) {
 #		-> Once all players have been updated, close the matchup in 
 #		   the database (completed=1)
 my $state = $dbh->prepare("update matchups set completed=1 where completed=0");
+$state->execute();
