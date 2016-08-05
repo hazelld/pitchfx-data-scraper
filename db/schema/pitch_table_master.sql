@@ -1,5 +1,6 @@
 create table pitches (
 	id int not null auto_increment,
+	pitch_date date not null,
 	sv_id varchar(30),
 	pitcher_id int not null,
 	batter_id int not null,
