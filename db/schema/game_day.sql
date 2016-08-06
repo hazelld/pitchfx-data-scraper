@@ -15,7 +15,10 @@ create table gamestats_batter (
 	sb smallint not null,
 	cs smallint not null,
 	lob smallint not null,
-	bo smallint not null
+	bo smallint not null,
+	sac smallint not null,
+	sf smallint not null,
+	hbp smallint not null
 );
 
 
