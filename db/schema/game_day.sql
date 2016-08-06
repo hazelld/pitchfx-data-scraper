@@ -1,4 +1,5 @@
 create table gamestats_batter (
+	gid varchar(30) not null,
 	pid int(11) not null,
 	game_date date not null,
 	pa smallint not null,
@@ -18,24 +19,27 @@ create table gamestats_batter (
 	bo smallint not null,
 	sac smallint not null,
 	sf smallint not null,
-	hbp smallint not null
+	hbp smallint not null,
+	foreign key(gid)
 );
 
 
 create table gamestats_pitcher (
+	gid varchar(30) not null,
 	pid int(11) not null,
 	game_date date not null,
 	win smallint not null,
 	loss smallint not null,
-	ip float not null,
+	save smallint not null,
 	hits smallint not null,
 	runs smallint not null,
-	earned_runs smallint not null,
+	er smallint not null,
 	hr smallint not null,
 	bb smallint not null,
 	so smallint not null,
-	save smallint not null,
-	avg_against float not null,
-	whip float not null,
-	era float not null
+	bf smallint not null,
+	outs smallint not null,
+	strikes smallint not null,
+	pitches smallint not null,
+	foreign key(gid)
 );

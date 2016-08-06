@@ -10,9 +10,10 @@ import MySQLdb
 import datetime
 
 #   Where we get the files from & the names of the files
-base_url  = "http://gd2.mlb.com/components/game/mlb/year_"
-pitch_ext = "inning/inning_all.xml"
-game_ext  = "boxscore.xml"
+base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
+pitch_ext  = "inning/inning_all.xml"
+game_b_ext = "boxscore.xml"
+game_p_ext = "bis_boxscore.xml"
 
 #   Database info 
 db_name              = "mlb_stats"
@@ -53,8 +54,8 @@ def data_scrape ( year, month, day ):
     
     for link in links:
         parse_pitches(full_url +  "gid_" + link + pitch_ext, logger, db, cur, date)
-        parse_box(full_url + "gid_" + link + game_ext, logger, db, cur, date)
-    
+        parse_batter_box(full_url + "gid_" + link + game_ext, logger, db, cur, date)
+        
 
 #
 #
@@ -70,14 +71,19 @@ def parse_pitches ( url, logger, db, cur, date ):
 #
 #
 #
-def parse_box ( url, logger, db, cur, date ):
-    logger.info("Parsing boxscore page: " + url)
-    
-    try: 
-        f = urllib2.urlopen(url)
-    except urllib2.URLError as e:
-        logger.warning(e.reason)
-        return False
+def parse_pitcher_box ( url, logger, db, cur, date ):
+    logger.info("Starting to parse pitcher's box score")
+    f = get_page(url, logger)
+
+
+
+#
+#
+#
+def parse_batter_box ( url, logger, db, cur, date ):
+
+    logger.info("Starting to parse batter's box score")
+    f = get_page(url, logger)
 
     # Get all batter tags
     soup   = BeautifulSoup(f, "lxml")     
@@ -91,8 +97,8 @@ def parse_box ( url, logger, db, cur, date ):
 
     logger.info("Attempting to insert into " + batter_gameday_table)
 
-    #
-    #
+
+    # Loop through each batter tag and extract the info
     for b in batter:
         pa = int(b['ab']) +  int(b['sac']) + int(b['bb']) +  int(b['sf']) + int(b['hbp'])
         
@@ -107,8 +113,7 @@ def parse_box ( url, logger, db, cur, date ):
                 int(b['sb']), int(b['cs']), int(b['lob']), int(bo), int(b['sac']),
                 int(b['sf']), int(b['hbp']) )
         
-        print data 
-
+        # Attempt to insert, rollback on error
         try:
             cur.execute(insert_batter, data)
             db.commit()
@@ -119,6 +124,25 @@ def parse_box ( url, logger, db, cur, date ):
 #
 #
 #
+def get_page ( url, logger ):
+    logger.info("Getting Page: " + url)
+
+    try:
+        f = urllib2.urlopen(url)
+    except urllib2.URLError as e:
+        logger.warning(e.reason)
+        return False
+
+    return f
+
+
+#   Get all the links off of the page:
+#       gd2.mlb.com/components/game/mlb/year/month/day/
+#   
+#   And finds the links for the games that have the following 
+#   format:
+#   
+#   gid_year_mm_dd_team1mlb_team2mlb   
 #
 def get_links ( url, logger ):
 
