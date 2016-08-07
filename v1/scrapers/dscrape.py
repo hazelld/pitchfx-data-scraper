@@ -1,43 +1,62 @@
 #!/bin/python
 
+from dscrape import *
+from config import *
+import sys
+import logging
+import re
+from bs4 import BeautifulSoup
+from bs4 import SoupStrainer
+import urllib2
+import MySQLdb
+import datetime
+
+
+#
+def init_globs ( year, month, day ):
+    global logger
+    global db
+    global cur
+    global date
+
+    logger = logging.getLogger(__name__)
+    db     = MySQLdb.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
+    cur    = db.cursor()
+
+    try:
+        date   = datetime.datetime.strptime(str(year)+"-"+str(month)+"-"+str(day), "%Y-%m-%d")
+    except:
+        logger.warning('Invalid date range')
+        return False
+    return True
+
 #
 #
 #
 #
 def data_scrape ( year, month, day ):
-    logger   = logging.getLogger(__name__)
-    full_url = base_url + str(year) + "/month_0" + str(month) + "/day_0" + str(day) + "/"
     
-    #   Attempt to connect to DB
-    db = MySQLdb.connect( host="localhost",
-                          user="whaze",
-                          passwd="",
-                          db=db_name )
-    cur = db.cursor()
+    if init_globs(year, month, day) == False: return False
+    logger.debug('Got date: ' + date.strftime('%Y-%m-%d'))
 
-    #
-    date = datetime.datetime.strptime(str(year)+"-"+str(month)+"-"+str(day), "%Y-%m-%d")
-    logger.info('Got date: ' + date.strftime('%Y-%m-%d'))
-            
-    #   Get the game links from the page. If there are any 
-    #   errors then log it and return from the func
-    logger.info("Getting " + full_url)
+    full_url = base_url + str(year) + "/month_0" + str(month) + "/day_0" + str(day) + "/"
     links = get_links(full_url, logger)
     
     if links:
-        logger.info("Successfully got links")
+        logger.debug("Successfully got links")
     else:
         logger.warning("Could not get links...Returning")
         return False
     
     for link in links:
         full_link = full_url + "gid_" + link 
-        gid = parse_game (full_link + game_p_ext, logger, db, cur, date)
+        gid = parse_game (full_link + game_ext, game_table, False)       
         
+        print gid
         if gid:
-            parse_batter_box(full_link + game_b_ext, logger, db, cur, date, gid)
-            parse_pitcher_box(full_link + game_p_ext, logger, db, cur, date, gid)
-            parse_pitches(full_link + pitch_ext, logger, db, cur, date, gid)
+            parse_game_stats(full_link+game_ext_b, 'batter', batter_map, batter_gameday_table, gid)
+            parse_pitcher_box(full_link+game_ext, 'pitcher', pitcher_map, pitch_gameday_table, gid)
+            #parse_pitches(full_link + pitch_ext, gid)
 
 
 #
@@ -45,35 +64,62 @@ def data_scrape ( year, month, day ):
 #   the database. Ensure the game is not already in the database. If
 #   it is then return false.
 #
-def parse_game ( url, logger, db, cur, date ):
-    logger.info("Getting game information")
+def parse_game ( url, db_table, gid):
+    logger.debug("Getting information from " + url)
+    
     f = get_page(url, logger)
+    if f == False: return False
 
-    soup = BeautifulSoup(f, "lxml")
+    soup  = BeautifulSoup(f, "lxml")
+    query = build_query(box_map + line_map, db_table, gid)
+
     box  = soup.find('boxscore')
     line = soup.find('linescore')
 
-    query = "insert into " + game_table + """ (gid, game_date, vid,
-            home_team, away_team, h_losses, h_wins, h_hits, h_runs, h_errors, 
-            a_losses, a_wins, a_hits, a_runs, a_errors) values ( %s, %s,%s,%s,%s,
-            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s )"""
-    
-    logger.info('Attempting to add data too ' + game_table)
+    data = [date]
+    for item in box_map:
+        data.append(box[item[1]])
 
-    data = (box['game_id'], date, box['venue_id'], box['home_team_code'], box['away_team_code'],
-            box['home_loss'], box['home_wins'], line['home_team_hits'], line['home_team_runs'],
-            line['home_team_errors'], box['away_loss'], box['away_wins'], line['away_team_hits'],
-            line['away_team_runs'], line['away_team_errors'])
+    for item in line_map:
+        data.append(line[item[1]])
 
-    if insert_db(query, data, logger, db, cur) == False:
+    if insert_db(query, data) == False:
         return False
-    else:
-        return box['game_id']
+
+    return data[1]
 
 #
 #
 #
-def parse_pitches ( url, logger, db, cur, date, gid ):
+def build_query (db_map, db_table, gid):
+
+    query = "insert into " + db_table + "("
+    val_query = " values ("
+
+    query     += "game_date, "
+    val_query += "%s," 
+
+    if gid:
+        query += "gid, " 
+        val_query += "%s,"
+
+    # Build the query
+    i = len(db_map)
+    for key in db_map:
+        query     += key[0]
+        val_query += "%s"
+        i -= 1
+        if i > 0:
+             query +=  ","
+             val_query += ","
+    
+    query += ")" + val_query + ")"
+    return query
+
+
+
+
+def parse_pitches ( url, gid ):
     logger.info("Parsing pitches page: " + url)
     f = get_page(url, logger)
 
@@ -102,72 +148,27 @@ def parse_pitches ( url, logger, db, cur, date, gid ):
 #
 #
 #
-def parse_pitcher_box ( url, logger, db, cur, date, gid ):
-    logger.info("Starting to parse pitcher's box score")
+def parse_game_stats ( url, tag, pmap, db_table, gid):
+    logger.debug("Parsing game stats")
+    
     f = get_page(url, logger)
+    if f == False: return False
 
     soup  = BeautifulSoup(f, "lxml")
-    pitch = soup.find_all('pitcher')
-    
-    insert_pitcher = "insert into " + pitch_gameday_table + """ 
-                     (gid, pid, game_date, win, loss, save, hits, runs,
-                     er, hr, bb, so, bf, outs, strikes, pitches) values (
-                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
-                     %s, %s, %s )"""
-    logger.info("Attempting to insert into " + pitch_gameday_table)
-    
-    for p in pitch:
-        win, loss, save = 0, 0, 0
-        
-        if p.has_attr('win'): 
-            win = 1
-        if p.has_attr('loss'):
-            loss = 1
-        if p.has_attr('save'):
-            save = 1
+    query = build_query(pmap, db_table, gid)
 
-        data = ( gid, p['id'], date, win, loss, save, p['h'], p['r'], p['er'],
-                 p['hr'], p['bb'], p['so'], p['bf'], p['out'], p['s'], p['np'] )
+    tags  = soup.find_all(tag)
 
-        insert_db(insert_pitcher, data, logger, db, cur)
+    for i in tags:
+        data = [ date, gid ]
+        for item in pmap:
+            try:
+                data.append(i[item[1]])
+            except:
+                data.append('0')
+                logger.warning("No Data associated with: " + item[1])
+        insert_db (query, data)
 
-#
-#
-#
-def parse_batter_box ( url, logger, db, cur, date, gid ):
-
-    logger.info("Starting to parse batter's box score")
-    f = get_page(url, logger)
-
-    # Get all batter tags
-    soup   = BeautifulSoup(f, "lxml")     
-    batter = soup.find_all('batter')
-
-    # Insert queries
-    insert_batter = "insert into " + batter_gameday_table + """
-                    (gid, pid, game_date, pa, ab, hits, runs, hr, bb, so, rbi, 1b, 2b, 3b,
-                    sb, cs, lob, bo, sac, sf, hbp) values (%s, %s, %s, %s, %s, %s, %s, 
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
-
-    logger.info("Attempting to insert into " + batter_gameday_table)
-
-
-    # Loop through each batter tag and extract the info
-    for b in batter:
-        pa = int(b['ab']) +  int(b['sac']) + int(b['bb']) +  int(b['sf']) + int(b['hbp'])
-        
-        try:
-            bo = int(b['bo']) / 100
-        except:
-            logger.warning("No BO attr...Skipping")
-            bo = 0
-
-        data = (gid, b['id'], date.strftime('%Y-%m-%d', pa, b['ab'],  
-                b['h'], b['r'], b['hr'], b['bb'], b['so'], 
-                b['rbi'], 0, 0, 0, b['sb'], b['cs'], b['lob'], 
-                bo, b['sac'], b['sf'], b['hbp'])
-        
-        insert_db(insert_batter, data, logger, db, cur)
 
 #
 #
@@ -218,7 +219,7 @@ def get_links ( url, logger ):
 #   
 #
 #
-def insert_db (query, data, logger, db, cur):
+def insert_db (query, data):
 
     # Attempt to insert, rollback on error
     try:
