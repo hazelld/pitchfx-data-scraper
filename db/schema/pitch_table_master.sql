@@ -1,9 +1,9 @@
 create table pitches (
-	id int not null auto_increment,
 	pitch_date date not null,
 	sv_id varchar(30),
-	pitcher_id int not null,
-	batter_id int not null,
+	pid int not null,
+	bid int not null,
+	gid varchar(30) not null,
 	pitcher_throws char(1),
 	batter_hits char(1),
 	description varchar(30),
@@ -37,5 +37,7 @@ create table pitches (
 	nasty int,
 	spin_dir float,
 	spin_rate float,
-	primary key(id)
+	foreign key (gid) references games(gid),
+	foreign key (pid) references players(pid),
+	foreign key (bid) references players(pid)
 );

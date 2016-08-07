@@ -20,7 +20,7 @@ create table gamestats_batter (
 	sac smallint not null,
 	sf smallint not null,
 	hbp smallint not null,
-	foreign key(gid)
+	foreign key(gid) references games(gid)
 );
 
 
@@ -41,5 +41,5 @@ create table gamestats_pitcher (
 	outs smallint not null,
 	strikes smallint not null,
 	pitches smallint not null,
-	foreign key(gid)
+	foreign key(gid) references games(gid)
 );
