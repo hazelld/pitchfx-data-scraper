@@ -12,6 +12,7 @@ batter_gameday_table = "gamestats_batter"
 pitch_gameday_table  = "gamestats_pitcher"
 pitches_table        = "pitches"
 game_table           = "games"
+ab_table             = "atbats"
 
 db_host   = "localhost"
 db_user   = "whaze"
@@ -79,3 +80,54 @@ pitcher_map = ( ('pid', 'id'),
                 ('outs', 'out'),
                 ('strikes', 's'),
                 ('pitches', 'np') )
+
+
+# Pitchfx data map
+pitch_map = (   ('sv_id', 'sv_id'),
+                ('pid', 'pitcher'),
+                ('bid', 'batter'),
+                ('pitcher_throws', 'p_throws'),
+                ('batter_hits', 'stand'),
+                ('description', 'des'),
+                ('pitch_result', 'type'),
+                ('outs', 'o'),
+                ('start_speed', 'start_speed'),
+                ('end_speed', 'end_speed'),
+                ('sz_top', 'sz_top'),
+                ('sz_bot', 'sz_bot'),
+                ('pfx_x', 'pfx_x'),
+                ('pfx_z', 'pfx_z'),
+                ('px', 'px'),
+                ('pz', 'pz'),
+                ('x0', 'x0'),
+                ('y0', 'y0'),
+                ('z0', 'z0'),
+                ('vx0', 'vx0'),
+                ('vy0', 'vy0'),
+                ('vz0', 'vz0'),
+                ('ax','ax'),
+                ('ay','ay'),
+                ('az','az'),
+                ('break_angle','break_angle'),
+                ('break_length','break_length'),
+                ('pitch_type','pitch_type'),
+                ('type_confidence','type_confidence'),
+                ('zone','zone'),
+                ('nasty','nasty'),
+                ('spin_dir','spin_dir'),
+                ('spin_rate','spin_rate') )
+
+# At bat info 
+ab_map = (  ('bid','batter'),
+            ('pid','pitcher'),
+            ('abno','num'),
+            ('des','des'),
+            ('balls','balls'),
+            ('strikes','strikes'),
+            ('outs','outs'),
+            ('event','event'),
+            ('home_runs','home_team_runs'),
+            ('away_runs','away_team_runs') )
+
+
+
