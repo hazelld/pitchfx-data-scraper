@@ -86,11 +86,8 @@ pitcher_map = ( ('pid', 'id'),
 pitch_map = (   ('sv_id', 'sv_id'),
                 ('pid', 'pitcher'),
                 ('bid', 'batter'),
-                ('pitcher_throws', 'p_throws'),
-                ('batter_hits', 'stand'),
-                ('description', 'des'),
-                ('pitch_result', 'type'),
-                ('outs', 'o'),
+                ('des', 'des'),
+                ('result', 'type'),
                 ('start_speed', 'start_speed'),
                 ('end_speed', 'end_speed'),
                 ('sz_top', 'sz_top'),
@@ -127,7 +124,9 @@ ab_map = (  ('bid','batter'),
             ('outs','outs'),
             ('event','event'),
             ('home_runs','home_team_runs'),
-            ('away_runs','away_team_runs') )
+            ('away_runs','away_team_runs'),
+            ('p_throws', 'p_throws'),
+            ('b_stand', 'stand') )
 
 
-
+i

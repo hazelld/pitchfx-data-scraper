@@ -9,6 +9,8 @@ create table atbats (
 	strikes smallint not null,
 	outs smallint not null,
 	event varchar(255) not null,
+	b_stand varchar(1) not null,
+	p_throws varchar(1) not null,
 	home_runs smallint not null,
 	away_runs smallint not null,
 	risp smallint not null,

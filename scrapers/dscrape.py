@@ -116,34 +116,18 @@ def build_query (db_map, db_table, gid):
     query += ")" + val_query + ")"
     return query
 
-
-
-
+#
+#   The pitching data needs it's own function as it has alot of very specific
+#   logic. It needs to link the pitch to it's corresponding entry in the atbat
+#   table. There are also some specific calculations that need to be done in 
+#   the atbat data for the runners
+#
 def parse_pitches ( url, gid ):
     logger.info("Parsing pitches page: " + url)
     f = get_page(url, logger)
 
     soup    = BeautifulSoup(f, "lxml")
     atbat   = soup.find_all('atbat')
-    
-    query = "insert into " + pitches_table + """ pitch_date, sv_id, pid, bid, gid, pitcher_throws, 
-             batter_hits, description, pitch_result, balls, strikes, outs, start_speed, end_speed,
-             sz_top, sz_bot, pfx_x, pfx_z, px, pz, x0, y0, z0, vx0, vy0, vz0, ax, ay, az, break_y, 
-             break_angle, break_length, pitch_type, type_confidence, zone, nasty, spin_dir, 
-             spin_rate values (  %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s ,%s, 
-              %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-              %s, %s)"""
-
-    for ab in atbat:
-        pitches = ab.find_all('pitch')
-        balls, strikes = 0,0
-
-        for p in pitches:
-            
-            data = ( date, p['sv_id'], ab['pitcher'], ab['batter'], gid, ab['p_throws'],
-                     ab['stand'], p['des'], p['type'], balls, strikes, ab['o'], ['start_speed'], 
-                     p['end_speed'], p[''],)
-
     
 #
 #
