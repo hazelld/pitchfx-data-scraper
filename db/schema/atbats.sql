@@ -1,5 +1,5 @@
 create table atbats (
-	abid int not null auto increment,
+	abid int not null auto_increment,
 	gid varchar(30) not null,
 	bid int not null,
 	pid int not null,
