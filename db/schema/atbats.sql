@@ -18,8 +18,6 @@ create table atbats (
 	runner_second smallint not null,
 	runner_third smallint not null,
 	rbi smallint not null,
-	bases_advanced smallint not null,
-	outs_caused smallint not null,
 	foreign key(gid) references games(gid),
 	foreign key(bid) references players(pid),
 	foreign key(pid) references players(pid),

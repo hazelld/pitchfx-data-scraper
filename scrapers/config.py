@@ -126,7 +126,10 @@ ab_map = (  ('bid','batter'),
             ('home_runs','home_team_runs'),
             ('away_runs','away_team_runs'),
             ('p_throws', 'p_throws'),
-            ('b_stand', 'stand') )
+            ('b_stand', 'stand'),
+            ('runner_first',''),
+            ('runner_second',''),
+            ('runner_third',''),
+            ('risp',''),
+            ('rbi',''))
 
-
-i
