@@ -1,13 +1,12 @@
 #!/bin/python
 
-from dscrape import *
-from config import *
+from scrapers.config import *
 import sys
 import logging
 import re
 from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
-import urllib2
+from urllib.request import urlopen
 import MySQLdb
 import datetime
 
@@ -52,7 +51,7 @@ def data_scrape ( year, month, day ):
         full_link = full_url + "gid_" + link 
         gid = parse_game (full_link + game_ext, game_table, False)       
         
-        print gid
+        print(gid)
         if gid:
             parse_game_stats(full_link+game_ext_b, 'batter', batter_map, batter_gameday_table, gid)
             parse_game_stats(full_link+game_ext, 'pitcher', pitcher_map, pitch_gameday_table, gid)
@@ -106,7 +105,7 @@ def parse_pitches ( url, gid ):
     atbat   = soup.find_all('atbat')
     ab_query= build_query(ab_map, ab_table, gid, False)
 
-    print ab_query
+    print(ab_query)
     # Loop through each atbat tag
     for ab in atbat:
         data = [ gid ]
@@ -151,9 +150,7 @@ def parse_pitches ( url, gid ):
         data.append(r3)
         data.append(risp)
         data.append(rbi)
-        
-        for i in data:
-            print i
+           
         insert_db(ab_query, data)
         
 
@@ -218,9 +215,9 @@ def get_page ( url ):
     logger.info("Getting Page: " + url)
 
     try:
-        f = urllib2.urlopen(url)
-    except urllib2.URLError as e:
-        logger.warning(e.reason)
+        f = urlopen(url)
+    except:
+        logger.warning("Could not get page " + url)
         return False
 
     return f

@@ -14,6 +14,7 @@ pitches_table        = "pitches"
 game_table           = "games"
 ab_table             = "atbats"
 
+global db_host
 db_host   = "localhost"
 db_user   = "whaze"
 db_passwd = ""
