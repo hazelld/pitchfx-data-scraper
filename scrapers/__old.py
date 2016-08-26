@@ -1,24 +1,6 @@
 
 
 #
-def init_globs ( year, month, day ):
-    global logger
-    global db
-    global cur
-    global date
-
-    logger = logging.getLogger(__name__)
-    db     = MySQLdb.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
-    cur    = db.cursor()
-
-    try:
-        date = datetime.datetime.strptime(str(year)+"-"+str(month)+"-"+str(day), "%Y-%m-%d")
-    except:
-        logger.warning('Invalid date range')
-        return False
-    return True
-
-#
 #
 #
 #

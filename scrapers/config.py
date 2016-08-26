@@ -1,4 +1,6 @@
 import collections
+import logging
+import MySQLdb
 
 #   Where we get the files from & the names of the files
 base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
@@ -15,9 +17,8 @@ pitches_table        = "pitches"
 game_table           = "games"
 ab_table             = "atbats"
 
-global db_host
 db_host   = "localhost"
-idb_user   = "whaze"
+db_user   = "whaze"
 db_passwd = ""
 
 
@@ -134,4 +135,19 @@ ab_map = (  ('bid','batter'),
             ('runner_third',''),
             ('risp',''),
             ('rbi',''))
+
+#
+def init_globs ():
+    global logger
+    global db
+    global cur
+
+    try:
+        logger = logging.getLogger(__name__)
+        db     = MySQLdb.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
+        cur    = db.cursor()
+    except:
+        return False
+
+    return True
 

@@ -21,7 +21,7 @@ def gdt_scrape(arg):
 
     # Either get the web pages from the website and put in a list of bs4 
     # objects, or open the files on disk into a list of bs4 objects.
-    if isinstance(arg, datetime.datetime):
+    if isinstance(arg, datetime.date):
         xml = get_files_web(arg)
     else:
         xml = get_files_disk(arg)
@@ -39,8 +39,9 @@ def gdt_scrape(arg):
 #
 #
 def get_files_web(date):
-    url = base_url+date.year+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
+    url = base_url+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
     
+    print(url)    
     links = get_links(url)
     if links == False:
         logger.warning("Could not get links on page: " + url)
@@ -48,20 +49,20 @@ def get_files_web(date):
     
     games = []
     for link in links:
-        full_url    = url + "/gid_" + link + "/"
-        game_parsed = {}
+        full_url    = url + "/gid_" + link 
+        games_parsed = {}
         
         for f in xml_files:
             page = get_page(full_url + f)
             if page == False: return False
 
-            games_parsed[f] = BeautifulSoup(f, "lxml")
+            games_parsed[f] = BeautifulSoup(page, "lxml")
         
         games.append(games_parsed)
 
     return games
 
-#
+# Note: Basedir MUST be the year dir
 def get_files_disk(base_dir):
     pass
 
@@ -74,12 +75,11 @@ def get_files_disk(base_dir):
 def parse(game_xmls):
     
     for game in game_xmls:
-        gid = parse_game(game[box])
-        
-        if gid:
-            parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
-            parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
-            parse_pitches(game[ab_pitches]) 
+        #gid = parse_game(game[box])
+        #if gid:
+            #parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
+            #parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
+            #parse_pitches(game[ab_pitches]) 
     
 #   Given a parsed xml tag, this builds a list of data from the db map.
 def build_data(tag, db_map, gid, date):
