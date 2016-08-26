@@ -1,7 +1,6 @@
 #!/bin/python
 
 from scrapers.config import *
-import sys
 import logging
 import re
 from bs4 import BeautifulSoup
@@ -12,176 +11,77 @@ import datetime
 
 
 #
-def init_globs ( year, month, day ):
-    global logger
-    global db
-    global cur
-    global date
-
-    logger = logging.getLogger(__name__)
-    db     = MySQLdb.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
-    cur    = db.cursor()
-
-    try:
-        date = datetime.datetime.strptime(str(year)+"-"+str(month)+"-"+str(day), "%Y-%m-%d")
-    except:
-        logger.warning('Invalid date range')
-        return False
-    return True
-
 #
 #
-#
-#
-def data_scrape ( year, month, day ):
-    
-    if init_globs(year, month, day) == False: return False
-    logger.debug('Got date: ' + date.strftime('%Y-%m-%d'))
+def gdt_scrape(arg):
 
-    full_url = base_url + str(year) + "/month_0" + str(month) + "/day_0" + str(day) + "/"
-    links = get_links(full_url)
-    
-    if links:
-        logger.debug("Successfully got links")
+    # Init the logger and db connection
+    if init_globs() == False: return False
+
+    # Either get the web pages from the website and put in a list of bs4 
+    # objects, or open the files on disk into a list of bs4 objects.
+    if isinstance(arg, datetime.datetime):
+        xml = get_files_web(arg)
     else:
-        logger.warning("Could not get links...Returning")
-        return False
+        xml = get_files_disk(arg)
+
+    if xml == False: return False
+
+    # Parse the xml files and add into the db 
+    parse(xml)
+
+
+#
+#
+#
+#
+#
+#
+def get_files_web(date):
+    pass
+
+def get_files_disk(base_dir):
+    pass
+
+
+#   This function is used to parse the xml files for each day. It takes a 
+#   list that holds each game. Each list item is a dictionary that has the 
+#   name of the file, and the corresponding BeautifulSoup object. 
+#
+#   The files that will be parsed are defined in the config.py file
+def parse(game_xmls):
     
-    for link in links:
-        full_link = full_url + "gid_" + link 
-        gid = parse_game (full_link + game_ext, game_table, False)       
+    for game in game_xmls:
+        gid = parse_game(game[box])
         
-        print(gid)
         if gid:
-            parse_game_stats(full_link+game_ext_b, 'batter', batter_map, batter_gameday_table, gid)
-            parse_game_stats(full_link+game_ext, 'pitcher', pitcher_map, pitch_gameday_table, gid)
-            parse_pitches(full_link + pitch_ext, gid)
-
-
-#
-#   Get the game information from the boxscore xml page, and add it to
-#   the database. Ensure the game is not already in the database. If
-#   it is then return false.
-#
-#   If the game is added, return the gid value for future use
-#
-def parse_game ( url, db_table, gid):
-    logger.debug("Getting information from " + url)
+            parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
+            parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
+            parse_pitches(game[ab_pitches]) 
     
-    f = get_page(url)
-    if f == False: return False
+#   Given a parsed xml tag, this builds a list of data from the db map.
+def build_data(tag, db_map, gid, date):
+    data = []
+    if gid: data.append(gid)
+    if date: data.append(date)
 
-    soup  = BeautifulSoup(f, "lxml")
-    query = build_query(box_map + line_map, db_table, gid, True)
-
-    box  = soup.find('boxscore')
-    line = soup.find('linescore')
-
-    data = [date]
-    for item in box_map:
-        data.append(box[item[1]])
-
-    for item in line_map:
-        data.append(line[item[1]])
-
-    if insert_db(query, data) == False:
-        return False
-
-    return data[1]
-
-
-#
-#   The pitching data needs it's own function as it has alot of very specific
-#   logic. It needs to link the pitch to it's corresponding entry in the atbat
-#   table. There are also some specific calculations that need to be done in 
-#   the atbat data for the runners
-#
-def parse_pitches ( url, gid ):
-    logger.info("Parsing pitches page: " + url)
-    f = get_page(url)
-    if f == False: return False
-
-    soup    = BeautifulSoup(f, "lxml")
-    atbat   = soup.find_all('atbat')
-    ab_query= build_query(ab_map, ab_table, gid, False)
-
-    print(ab_query)
-    # Loop through each atbat tag
-    for ab in atbat:
-        data = [ gid ]
-
-        # Get data from the tag
-        for item in ab_map:
-            try:
-                data.append(ab[item[1]])
-            except:
-                
-                # If the item is in the map to get built into the query and
-                # has no gd2 equivalent, dont add placeholder. The value will 
-                # be added in manually.
-                if item[1] != '':
-                    data.append('0')
-                    logger.warning("No data associated with: " + item[1])
-        
-        # Have to get the runners for the other stats
-        runners = ab.find_all('runner')
-        r1 = r2 = r3 = rbi = risp = 0
-        
-        for r in runners:
+    for item in db_map:
+        try:
+            data.append(tag[item[1]])
+        except:
             
-            if r['start'] == '1B':
-                r1 = 1
-            elif r['start'] == '2B':
-                r2 = 1
-            elif r['start'] == '3B':
-                r3 = 1
+            # If the item is in the map to get built into the query and
+            # has no gd2 equivalent, (ie. value is calculated not scraped)
+            # then don't add a default value. Value will be added manually.
+            if item[1] == '':
+                data.append(0)
+                logger.warning("No data associated with: " + item[1])
 
-            try:
-                if r['rbi'] == 'T':
-                    rbi = rbi + 1
-            except:
-                pass
-        
-        risp = r2 + r3
 
-        # Append this to data
-        data.append(r1)
-        data.append(r2)
-        data.append(r3)
-        data.append(risp)
-        data.append(rbi)
-           
-        insert_db(ab_query, data)
-        
-
+#   Build the query string based on the database map defined
+#   in config.py
 #
-#
-#
-def parse_game_stats ( url, tag, pmap, db_table, gid):
-    logger.debug("Parsing game stats")
-    
-    f = get_page(url)
-    if f == False: return False
-
-    soup  = BeautifulSoup(f, "lxml")
-    query = build_query(pmap, db_table, gid, True)
-
-    tags  = soup.find_all(tag)
-
-    for i in tags:
-        data = [ date, gid ]
-        for item in pmap:
-            try:
-                data.append(i[item[1]])
-            except:
-                data.append('0')
-                logger.warning("No Data associated with: " + item[1])
-        insert_db (query, data)
-
-
-#
-#
-#
+#   If the date and gid need to be added then manually add.
 def build_query (db_map, db_table, gid, date):
 
     query = "insert into " + db_table + "("
@@ -208,18 +108,14 @@ def build_query (db_map, db_table, gid, date):
     query += ")" + val_query + ")"
     return query
 
-#
-#
-#
-def get_page ( url ):
-    logger.info("Getting Page: " + url)
 
+#   Safely open the url that is passed to the function
+def get_page ( url ):
     try:
         f = urlopen(url)
     except:
         logger.warning("Could not get page " + url)
         return False
-
     return f
 
 
@@ -251,12 +147,15 @@ def get_links ( url ):
     return links
 
 
-#   
+#   Insert into the database that is defined in config.py, rollback on 
+#   error.
 #
+#   Arguments:
+#       query => Text query to execute
+#       data  => Data to insert
 #
 def insert_db (query, data):
 
-    # Attempt to insert, rollback on error
     try:
         cur.execute(query, data)
         db.commit()

@@ -2,9 +2,9 @@ import collections
 
 #   Where we get the files from & the names of the files
 base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
-pitch_ext  = "inning/inning_all.xml"
-game_ext   = "bis_boxscore.xml"
-game_ext_b = "boxscore.xml"
+ab_pitches = "inning/inning_all.xml"
+bis_box    = "bis_boxscore.xml"
+box        = "boxscore.xml"
 
 #   Database info 
 db_name              = "mlb_stats"
@@ -16,7 +16,7 @@ ab_table             = "atbats"
 
 global db_host
 db_host   = "localhost"
-db_user   = "whaze"
+idb_user   = "whaze"
 db_passwd = ""
 
 
