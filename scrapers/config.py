@@ -5,6 +5,7 @@ base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
 ab_pitches = "inning/inning_all.xml"
 bis_box    = "bis_boxscore.xml"
 box        = "boxscore.xml"
+xml_files  = (ab_pitches, bis_box, box)
 
 #   Database info 
 db_name              = "mlb_stats"

@@ -16,7 +16,8 @@ import datetime
 def gdt_scrape(arg):
 
     # Init the logger and db connection
-    if init_globs() == False: return False
+    if init_globs() == False: 
+        return False
 
     # Either get the web pages from the website and put in a list of bs4 
     # objects, or open the files on disk into a list of bs4 objects.
@@ -38,8 +39,29 @@ def gdt_scrape(arg):
 #
 #
 def get_files_web(date):
-    pass
+    url = base_url+date.year+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
+    
+    links = get_links(url)
+    if links == False:
+        logger.warning("Could not get links on page: " + url)
+        return False
+    
+    games = []
+    for link in links:
+        full_url    = url + "/gid_" + link + "/"
+        game_parsed = {}
+        
+        for f in xml_files:
+            page = get_page(full_url + f)
+            if page == False: return False
 
+            games_parsed[f] = BeautifulSoup(f, "lxml")
+        
+        games.append(games_parsed)
+
+    return games
+
+#
 def get_files_disk(base_dir):
     pass
 
@@ -155,7 +177,6 @@ def get_links ( url ):
 #       data  => Data to insert
 #
 def insert_db (query, data):
-
     try:
         cur.execute(query, data)
         db.commit()
@@ -163,5 +184,4 @@ def insert_db (query, data):
         logger.warning("DB threw error: " + str(e))
         db.rollback
         return False
-    
     return True
