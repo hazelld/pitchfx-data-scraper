@@ -3,17 +3,18 @@
 from scrapers.config import *
 import logging
 import re
+import os
 from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 from urllib.request import urlopen
-import MySQLdb
+import pymysql.cursors
 import datetime
 
 
 #
 #
 #
-def gdt_scrape(arg):
+def gdt_scrape(arg, source):
 
     # Init the logger and db connection
     if init_globs() == False: 
@@ -21,10 +22,13 @@ def gdt_scrape(arg):
 
     # Either get the web pages from the website and put in a list of bs4 
     # objects, or open the files on disk into a list of bs4 objects.
-    if isinstance(arg, datetime.date):
+    if source == "web":
         xml = get_files_web(arg)
-    else:
+    elif source == "disk":
         xml = get_files_disk(arg)
+    else:
+        logger.warning("Invalid argument to gdt_scrape: " + source)
+        return False
 
     if xml == False: return False
 
@@ -32,7 +36,7 @@ def gdt_scrape(arg):
     parse(xml)
 
 
-#
+
 #
 #
 #
@@ -40,8 +44,7 @@ def gdt_scrape(arg):
 #
 def get_files_web(date):
     url = base_url+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
-    
-    print(url)    
+      
     links = get_links(url)
     if links == False:
         logger.warning("Could not get links on page: " + url)
@@ -62,9 +65,28 @@ def get_files_web(date):
 
     return games
 
-# Note: Basedir MUST be the year dir
-def get_files_disk(base_dir):
-    pass
+# 
+def get_files_disk(date):
+    path = "gd2/year_"+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
+    links= [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+
+    games = []
+    for link in links:
+        games_parsed = {}
+        npath = os.path.join(path, link)
+
+        for f in xml_files:
+            try:
+                page = open(os.path.join(npath, f), "r")
+            except:
+                logger.warning("Could not open file: " + os.path.join(npath, f))
+                continue
+            
+            games_parsed[f] = BeautifulSoup(page, "lxml")
+
+        games.append(games_parsed)
+
+    return games
 
 
 #   This function is used to parse the xml files for each day. It takes a 
@@ -73,8 +95,8 @@ def get_files_disk(base_dir):
 #
 #   The files that will be parsed are defined in the config.py file
 def parse(game_xmls):
-    
-    for game in game_xmls:
+    pass      
+    #for game in game_xmls:
         #gid = parse_game(game[box])
         #if gid:
             #parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)

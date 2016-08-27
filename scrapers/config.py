@@ -1,6 +1,6 @@
 import collections
 import logging
-import MySQLdb
+import pymysql.cursors
 
 #   Where we get the files from & the names of the files
 base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
@@ -144,7 +144,7 @@ def init_globs ():
 
     try:
         logger = logging.getLogger(__name__)
-        db     = MySQLdb.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
+        db     = pymysql.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
         cur    = db.cursor()
     except:
         return False
