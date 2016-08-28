@@ -136,18 +136,4 @@ ab_map = (  ('bid','batter'),
             ('risp',''),
             ('rbi',''))
 
-#
-def init_globs ():
-    global logger
-    global db
-    global cur
-
-    try:
-        logger = logging.getLogger(__name__)
-        db     = pymysql.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
-        cur    = db.cursor()
-    except:
-        return False
-
-    return True
 

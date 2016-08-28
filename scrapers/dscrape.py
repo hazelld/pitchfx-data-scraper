@@ -17,7 +17,7 @@ import datetime
 def gdt_scrape(arg, source):
 
     # Init the logger and db connection
-    if init_globs() == False: 
+    if init_globs(arg) == False: 
         return False
 
     # Either get the web pages from the website and put in a list of bs4 
@@ -33,7 +33,7 @@ def gdt_scrape(arg, source):
     if xml == False: return False
 
     # Parse the xml files and add into the db 
-    parse(xml)
+    parse(xml, arg)
 
 
 
@@ -94,15 +94,43 @@ def get_files_disk(date):
 #   name of the file, and the corresponding BeautifulSoup object. 
 #
 #   The files that will be parsed are defined in the config.py file
-def parse(game_xmls):
-    pass      
-    #for game in game_xmls:
-        #gid = parse_game(game[box])
-        #if gid:
-            #parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
-            #parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
+def parse(game_xmls, date):
+      
+    for game in game_xmls:
+        gid = parse_game(game[box], date, game_table, False)
+        
+        if gid:
+            print("Processed gid: " + gid)
+          #  parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
+           # parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
             #parse_pitches(game[ab_pitches]) 
     
+
+
+#
+#   Get the game information from the boxscore xml page, and add it to
+#   the database. Ensure the game is not already in the database. If
+#   it is then return false.
+#
+#   If the game is added, return the gid value for future use
+#
+def parse_game ( soup, date, db_table, gid ):
+
+    query = build_query(box_map + line_map, db_table, gid, True)
+
+    box  = soup.find('boxscore')
+    line = soup.find('linescore')
+    
+    data = [date]
+    data = data + build_data(box, box_map, False, False)
+    data = data + build_data(line, line_map, False, False)
+    
+    if insert_db(query, data) == False:
+        return False
+
+    return data[1]
+
+
 #   Given a parsed xml tag, this builds a list of data from the db map.
 def build_data(tag, db_map, gid, date):
     data = []
@@ -120,7 +148,8 @@ def build_data(tag, db_map, gid, date):
             if item[1] == '':
                 data.append(0)
                 logger.warning("No data associated with: " + item[1])
-
+    
+    return data
 
 #   Build the query string based on the database map defined
 #   in config.py
@@ -199,11 +228,31 @@ def get_links ( url ):
 #       data  => Data to insert
 #
 def insert_db (query, data):
+    
     try:
         cur.execute(query, data)
         db.commit()
-    except MySQLdb.Error as e:
-        logger.warning("DB threw error: " + str(e))
+    except pymysql.Error as e:
+        logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
         db.rollback
         return False
     return True
+
+
+#
+def init_globs (arg_date):
+    global logger
+    global db
+    global date
+    global cur
+    
+    date = arg_date
+    try:
+        logger = logging.getLogger(__name__)
+        db     = pymysql.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
+        cur    = db.cursor()
+    except:
+        return False
+
+    return True
+

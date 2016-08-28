@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
 from datetime import timedelta, date
-from scrapers.dscrape import get_page, get_links
+from scrapers.dscrape import get_page, get_links, init_globs
 from scrapers.config import *
 import os
 
-start_date = date(2016, 7, 1)
-end_date   = date(2016, 7, 10)
+start_date = date(2015, 4, 1)
+end_date   = date(2015, 10, 1)
 base_dir   = "gd2/"
 
-if init_globs() == False:
+if init_globs(start_date) == False:
     print("Couldn't set up globals")
 
 #
@@ -41,7 +41,9 @@ for sd in daterange(start_date, end_date):
                 continue 
 
             print("Writing File: " + os.path.join(path, f))
-            with open(os.path.join(path, f), 'w') as temp_file:
-                temp_file.write(str(xml.read()))
-
+            try:
+                with open(os.path.join(path, f), 'w') as temp_file:
+                    temp_file.write(str(xml.read()))
+            except:
+                print("Error trying to write to file")
 

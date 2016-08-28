@@ -29,36 +29,6 @@ def data_scrape ( year, month, day ):
             parse_pitches(full_link + pitch_ext, gid)
 
 
-#
-#   Get the game information from the boxscore xml page, and add it to
-#   the database. Ensure the game is not already in the database. If
-#   it is then return false.
-#
-#   If the game is added, return the gid value for future use
-#
-def parse_game ( url, db_table, gid):
-    logger.debug("Getting information from " + url)
-    
-    f = get_page(url)
-    if f == False: return False
-
-    soup  = BeautifulSoup(f, "lxml")
-    query = build_query(box_map + line_map, db_table, gid, True)
-
-    box  = soup.find('boxscore')
-    line = soup.find('linescore')
-
-    data = [date]
-    for item in box_map:
-        data.append(box[item[1]])
-
-    for item in line_map:
-        data.append(line[item[1]])
-
-    if insert_db(query, data) == False:
-        return False
-
-    return data[1]
 
 
 #
