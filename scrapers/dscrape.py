@@ -101,8 +101,8 @@ def parse(game_xmls, date):
         
         if gid:
             print("Processed gid: " + gid)
-          #  parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
-           # parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
+            parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
+            parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
             #parse_pitches(game[ab_pitches]) 
     
 
@@ -130,6 +130,20 @@ def parse_game ( soup, date, db_table, gid ):
 
     return data[1]
 
+#
+#
+#
+def parse_gamestats ( soup, tag, pmap, db_table, gid):
+    
+    query = build_query(pmap, db_table, gid, True)
+    tags  = soup.find_all(tag)
+
+    for i in tags:
+        data = build_data(i, pmap, date, gid)
+        print(query)
+        print(data)
+        insert_db (query, data)
+
 
 #   Given a parsed xml tag, this builds a list of data from the db map.
 def build_data(tag, db_map, gid, date):
@@ -145,7 +159,7 @@ def build_data(tag, db_map, gid, date):
             # If the item is in the map to get built into the query and
             # has no gd2 equivalent, (ie. value is calculated not scraped)
             # then don't add a default value. Value will be added manually.
-            if item[1] == '':
+            if item[1] != '':
                 data.append(0)
                 logger.warning("No data associated with: " + item[1])
     

@@ -92,28 +92,3 @@ def parse_pitches ( url, gid ):
         insert_db(ab_query, data)
         
 
-#
-#
-#
-def parse_game_stats ( url, tag, pmap, db_table, gid):
-    logger.debug("Parsing game stats")
-    
-    f = get_page(url)
-    if f == False: return False
-
-    soup  = BeautifulSoup(f, "lxml")
-    query = build_query(pmap, db_table, gid, True)
-
-    tags  = soup.find_all(tag)
-
-    for i in tags:
-        data = [ date, gid ]
-        for item in pmap:
-            try:
-                data.append(i[item[1]])
-            except:
-                data.append('0')
-                logger.warning("No Data associated with: " + item[1])
-        insert_db (query, data)
-
-
