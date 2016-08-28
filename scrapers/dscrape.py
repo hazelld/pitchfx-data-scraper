@@ -103,7 +103,7 @@ def parse(game_xmls, date):
             print("Processed gid: " + gid)
             parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
             parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
-            #parse_pitches(game[ab_pitches]) 
+            parse_pitches(game[ab_pitches], gid) 
     
 
 
@@ -135,21 +135,80 @@ def parse_game ( soup, date, db_table, gid ):
 #
 def parse_gamestats ( soup, tag, pmap, db_table, gid):
     
-    query = build_query(pmap, db_table, gid, True)
+    query = build_query(pmap, db_table, True, True)
     tags  = soup.find_all(tag)
 
     for i in tags:
-        data = build_data(i, pmap, date, gid)
-        print(query)
-        print(data)
+        data = build_data(i, pmap, gid, date)
         insert_db (query, data)
 
+#
+#
+#
+def parse_pitches ( soup, gid ):
+    
+    atbats   = soup.find_all('atbat')
+    ab_query = build_query(ab_map, ab_table, True, True)
+    p_query  = build_query(pitch_map, pitches_table, True, True)
+
+    for ab in atbats:
+        data = build_data(ab, ab_map, gid, date)
+        
+        # Get runners on base
+        r1 = r2 = r3 = rbi = 0
+        runners = ab.find_all('runner')
+        
+        for r in runners:
+            if r['start'] == '1B':
+                r1 = 1
+            elif r['start'] == '2B':
+                r2 = 1
+            elif r['start'] == '3B':
+                r3 = 1
+
+            # Safely check for rbi
+            try: 
+                if r['rbi'] == 'T': rbi = rbi + 1
+            except: pass
+
+        data.append(r1)
+        data.append(r2)
+        data.append(r3)
+        data.append(rbi)
+        data.append(r2 + r3)
+
+        # Insert data, get the abid key back
+        insert_db(ab_query, data)
+        abid = cur.lastrowid
+
+        pitches = ab.find_all('pitch')
+        outs = ab['o']
+        pid  = ab['pitcher']
+        bid  = ab['batter']
+        balls = strikes = 0
+
+        for p in pitches:
+            pdata = build_data(p, pitch_map, gid, date)
+            pdata.append(abid)
+            pdata.append(balls)
+            pdata.append(strikes)
+            pdata.append(outs)
+            pdata.append(pid)
+            pdata.append(bid)
+            insert_db(p_query, pdata)
+            
+            if p['type'] == 'B':
+                balls = balls + 1
+            elif p['type'] == 'S':
+                if strikes < 2: strikes = strikes + 1
+        
+        
 
 #   Given a parsed xml tag, this builds a list of data from the db map.
 def build_data(tag, db_map, gid, date):
     data = []
-    if gid: data.append(gid)
     if date: data.append(date)
+    if gid: data.append(gid)
 
     for item in db_map:
         try:
@@ -248,6 +307,7 @@ def insert_db (query, data):
         db.commit()
     except pymysql.Error as e:
         logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
+        logger.warning('Previous error occured: ' + str(data[1]))
         db.rollback
         return False
     return True

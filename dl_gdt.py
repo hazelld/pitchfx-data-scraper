@@ -5,8 +5,8 @@ from scrapers.dscrape import get_page, get_links, init_globs
 from scrapers.config import *
 import os
 
-start_date = date(2015, 4, 1)
-end_date   = date(2015, 10, 1)
+start_date = date(2016, 4, 1)
+end_date   = date(2016, 10, 1)
 base_dir   = "gd2/"
 
 if init_globs(start_date) == False:

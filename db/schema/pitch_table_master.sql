@@ -1,5 +1,5 @@
 create table pitches (
-	pitch_date date not null,
+	game_date date not null,
 	sv_id varchar(30),
 	pid int not null,
 	bid int not null,

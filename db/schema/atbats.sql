@@ -1,10 +1,11 @@
 create table atbats (
 	abid int not null auto_increment,
+	game_date date not null,
 	gid varchar(30) not null,
 	bid int not null,
 	pid int not null,
 	abno smallint not null,
-	des varchar(255),
+	des varchar(550),
 	balls smallint not null,
 	strikes smallint not null,
 	outs smallint not null,
