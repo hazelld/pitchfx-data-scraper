@@ -307,7 +307,7 @@ def insert_db (query, data):
         db.commit()
     except pymysql.Error as e:
         logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
-        logger.warning('Previous error occured: ' + str(data[1]))
+        logger.warning('Previous error occured with data: ' + str(data[1]))
         db.rollback
         return False
     return True

@@ -1,6 +1,11 @@
 import collections
 import logging
 import pymysql.cursors
+import configparser
+from datetime import datetime
+
+#
+config_file = "scrapers/scrapers.cfg"
 
 #   Where we get the files from & the names of the files
 base_url   = "http://gd2.mlb.com/components/game/mlb/year_"
@@ -9,6 +14,13 @@ bis_box    = "bis_boxscore.xml"
 box        = "boxscore.xml"
 xml_files  = (ab_pitches, bis_box, box)
 
+#   pscrape website
+pscrape_base = "http://crunchtimebaseball.com/"
+pscrape_home = "baseball_map.html"
+pscrape_data = "master.csv"
+pscrape_opts = "PlayerScraper"
+pscrape_last_update = "LastUpdate"
+
 #   Database info 
 db_name              = "mlb_stats"
 batter_gameday_table = "gamestats_batter"
@@ -16,6 +28,7 @@ pitch_gameday_table  = "gamestats_pitcher"
 pitches_table        = "pitches"
 game_table           = "games"
 ab_table             = "atbats"
+player_table         = "players"
 
 db_host   = "localhost"
 db_user   = "whaze"
@@ -138,4 +151,34 @@ ab_map = (  ('bid','batter'),
             ('risp',''),
             ('rbi',''))
 
+# Players database, its here so build_query may be called
+player_map=(('pid', ''),
+            ('name', ''),
+            ('pos', ''), 
+            ('team', ''),
+            ('bats', ''),
+            ('throws', ''))
+
+def get_last_playerdb_update():
+    Config = configparser.ConfigParser()
+    Config.read(config_file)
+    
+    try:
+        opts = Config.options(pscrape_opts)
+    except:
+        return datetime.MINYEAR
+    
+    date = Config.get(pscrape_opts, pscrape_last_update)
+    return datetime.strptime(date, '%y%m%d')
+
+
+def update_last_playerdb_update( date ):
+    Config = configparser.ConfigParser()
+    Config.read(config_file)
+
+    date_string = date.strftime('%y%m%d')
+    Config[pscrape_opts][pscrape_last_update] = date_string
+
+    with open(config_file, 'w') as configfile:
+        Config.write(configfile)
 
