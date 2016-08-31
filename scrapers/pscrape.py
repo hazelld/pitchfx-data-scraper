@@ -6,21 +6,23 @@ import csv
 import sys
 import logging
 import pymysql.cursors
+import logging
 from datetime import datetime
-from scrapers import *
+from scrapers.dscrape import *
+from scrapers.db import *
 
 #
 #
 #
 def pscrape (current_date):
-    
-    if init_globs(current_date) == False:
-        return False
+
+    logger = logging.getLogger(__name__)
+    if init_db() == False: return False
 
     home = get_page(pscrape_base + pscrape_home)
     if home == False: return False
-
-    newest_update = get_last_update(home.read())
+    
+    newest_update = get_last_update(home.read(), logger)
     last_update   = get_last_playerdb_update()
     
     if newest_update > last_update:
@@ -31,6 +33,7 @@ def pscrape (current_date):
             print("Successfully updated playerdb")
     else:
         print("No playerdb update available")
+
 #
 def update_player_db():
     csv_file = get_page(pscrape_base + pscrape_data)
@@ -51,7 +54,7 @@ def update_player_db():
 
 
 #
-def get_last_update (page):
+def get_last_update (page, logger):
     regex = re.compile("\(last update:.*?([0-9]+)", re.IGNORECASE)
     match = regex.findall(str(page))
     

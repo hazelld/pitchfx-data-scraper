@@ -13,21 +13,20 @@ from scrapers.db import *
 #
 #
 #
-def gdt_scrape(arg, source):
+def gdt_scrape(date, source):
+    global logger
 
-    # Init the logger and db connection
-    if init_globs(arg) == False: 
-        return False
-    
+    # Init the logger and db connection 
     if init_db() == False:
         return False
+    logger = logging.getLogger(__name__)
 
     # Either get the web pages from the website and put in a list of bs4 
     # objects, or open the files on disk into a list of bs4 objects.
     if source == "web":
-        xml = get_files_web(arg)
+        xml = get_files_web(date)
     elif source == "disk":
-        xml = get_files_disk(arg)
+        xml = get_files_disk(date)
     else:
         logger.warning("Invalid argument to gdt_scrape: " + source)
         return False
@@ -35,7 +34,7 @@ def gdt_scrape(arg, source):
     if xml == False: return False
 
     # Parse the xml files and add into the db 
-    parse(xml, arg)
+    parse(xml, date)
 
 
 
@@ -103,9 +102,9 @@ def parse(game_xmls, date):
         
         if gid:
             print("Processed gid: " + gid)
-            parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid)
-            parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid)
-            parse_pitches(game[ab_pitches], gid) 
+            parse_gamestats(game[box], 'batter', batter_map, batter_gameday_table, gid, date)
+            parse_gamestats(game[bis_box], 'pitcher', pitcher_map, pitch_gameday_table, gid, date)
+            parse_pitches(game[ab_pitches], gid, date) 
     
 
 
@@ -118,7 +117,7 @@ def parse(game_xmls, date):
 #
 def parse_game ( soup, date, db_table, gid ):
 
-    query = build_query(box_map + line_map, db_table, gid, True)
+    query = build_query(box_map + line_map, db_table, gid, date)
 
     box  = soup.find('boxscore')
     line = soup.find('linescore')
@@ -135,7 +134,7 @@ def parse_game ( soup, date, db_table, gid ):
 #
 #
 #
-def parse_gamestats ( soup, tag, pmap, db_table, gid):
+def parse_gamestats ( soup, tag, pmap, db_table, gid, date):
     
     query = build_query(pmap, db_table, True, True)
     tags  = soup.find_all(tag)
@@ -147,7 +146,7 @@ def parse_gamestats ( soup, tag, pmap, db_table, gid):
 #
 #
 #
-def parse_pitches ( soup, gid ):
+def parse_pitches ( soup, gid, date ):
     
     atbats   = soup.find_all('atbat')
     ab_query = build_query(ab_map, ab_table, True, True)
@@ -263,13 +262,4 @@ def get_links ( url ):
            links.extend(match)
     
     return links
-
-#
-def init_globs (arg_date):
-    global logger
-    global date
-
-    date = arg_date
-    logger = logging.getLogger(__name__)
-    return True
 
