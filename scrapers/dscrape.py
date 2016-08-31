@@ -69,7 +69,12 @@ def get_files_web(date):
 # 
 def get_files_disk(date):
     path = "gd2/year_"+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
-    links= [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+    
+    try:
+        links= [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+    except:
+        logger.error("Path does not exist: " + path)
+        return False
 
     games = []
     for link in links:
