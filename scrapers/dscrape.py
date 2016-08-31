@@ -161,46 +161,23 @@ def parse_pitches ( soup, gid, date ):
         data = build_data(ab, ab_map, gid, date)
         
         # Get runners on base
-        r1 = r2 = r3 = rbi = 0
-        runners = ab.find_all('runner')
-        
-        for r in runners:
-            if r['start'] == '1B':
-                r1 = 1
-            elif r['start'] == '2B':
-                r2 = 1
-            elif r['start'] == '3B':
-                r3 = 1
-
-            # Safely check for rbi
-            try: 
-                if r['rbi'] == 'T': rbi = rbi + 1
-            except: pass
-
-        data.append(r1)
-        data.append(r2)
-        data.append(r3)
-        data.append(rbi)
-        data.append(r2 + r3)
+        data.extend(parse_runners(ab.find_all('runner')))
 
         # Insert data, get the abid key back
         insert_db(ab_query, data)
         abid = get_last_id()
 
-        pitches = ab.find_all('pitch')
+        
+        # This info comes from ab tag, not pitch tag
         outs = ab['o']
         pid  = ab['pitcher']
         bid  = ab['batter']
         balls = strikes = 0
 
+        pitches = ab.find_all('pitch')
         for p in pitches:
             pdata = build_data(p, pitch_map, gid, date)
-            pdata.append(abid)
-            pdata.append(balls)
-            pdata.append(strikes)
-            pdata.append(outs)
-            pdata.append(pid)
-            pdata.append(bid)
+            pdata.extend([abid, balls, strikes, outs, pid, bid])
             insert_db(p_query, pdata)
             
             if p['type'] == 'B':
@@ -208,7 +185,23 @@ def parse_pitches ( soup, gid, date ):
             elif p['type'] == 'S':
                 if strikes < 2: strikes = strikes + 1
         
+
+def parse_runners(tags):
+    r1 = r2 = r3 = rbi = 0
+    
+    for r in tags:
+        if r['start'] == '1B':
+            r1 = 1
+        elif r['start'] == '2B':
+            r2 = 1
+        elif r['start'] == '3B':
+            r3 = 1
         
+        try: 
+            if r['rbi'] == 'T': rbi = rbi + 1
+        except: pass
+
+    return [r1, r2, r3, rbi, r2+r3]
 
 #   Given a parsed xml tag, this builds a list of data from the db map.
 def build_data(tag, db_map, gid, date):
