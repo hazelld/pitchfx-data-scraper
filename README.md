@@ -9,6 +9,10 @@
   
 -Basic GUI  
 
-## Milestone 2
--Backtesting framework
--Models
+Scrapers TODO:  
+-Move globals to conf file    
+-Improve logger messages  
+-Improve function comments and file comments  
+-Set up __init__.py  
+-Fantasy points scraper    
+-Move downloader also  
