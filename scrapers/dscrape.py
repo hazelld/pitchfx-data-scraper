@@ -1,15 +1,14 @@
 #!/bin/python
 
-from scrapers.config import *
 import logging
 import re
 import os
 from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 from urllib.request import urlopen
-import pymysql.cursors
 import datetime
-
+from scrapers.config import *
+from scrapers.db import *
 
 #
 #
@@ -18,6 +17,9 @@ def gdt_scrape(arg, source):
 
     # Init the logger and db connection
     if init_globs(arg) == False: 
+        return False
+    
+    if init_db() == False:
         return False
 
     # Either get the web pages from the website and put in a list of bs4 
@@ -179,7 +181,7 @@ def parse_pitches ( soup, gid ):
 
         # Insert data, get the abid key back
         insert_db(ab_query, data)
-        abid = cur.lastrowid
+        abid = get_last_id()
 
         pitches = ab.find_all('pitch')
         outs = ab['o']
@@ -224,36 +226,6 @@ def build_data(tag, db_map, gid, date):
     
     return data
 
-#   Build the query string based on the database map defined
-#   in config.py
-#
-#   If the date and gid need to be added then manually add.
-def build_query (db_map, db_table, gid, date):
-
-    query = "insert into " + db_table + "("
-    val_query = " values ("
-
-    if date:
-        query     += "game_date, "
-        val_query += "%s," 
-
-    if gid:
-        query += "gid, " 
-        val_query += "%s,"
-
-    # Build the query
-    i = len(db_map)
-    for key in db_map:
-        query     += key[0]
-        val_query += "%s"
-        i -= 1
-        if i > 0:
-             query +=  ","
-             val_query += ","
-    
-    query += ")" + val_query + ")"
-    return query
-
 
 #   Safely open the url that is passed to the function
 def get_page ( url ):
@@ -292,41 +264,12 @@ def get_links ( url ):
     
     return links
 
-
-#   Insert into the database that is defined in config.py, rollback on 
-#   error.
-#
-#   Arguments:
-#       query => Text query to execute
-#       data  => Data to insert
-#
-def insert_db (query, data):
-    
-    try:
-        cur.execute(query, data)
-        db.commit()
-    except pymysql.Error as e:
-        logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
-        logger.warning('Previous error occured with data: ' + str(data[1]))
-        db.rollback
-        return False
-    return True
-
-
 #
 def init_globs (arg_date):
     global logger
-    global db
     global date
-    global cur
-    
-    date = arg_date
-    try:
-        logger = logging.getLogger(__name__)
-        db     = pymysql.connect( host=db_host, user=db_user, passwd=db_passwd, db=db_name )
-        cur    = db.cursor()
-    except:
-        return False
 
+    date = arg_date
+    logger = logging.getLogger(__name__)
     return True
 

@@ -1,7 +1,5 @@
 #!/usr/bin/python
 
-from scrapers.config import *
-from scrapers.dscrape import *
 from urllib.request import urlopen
 import re
 import csv
@@ -9,7 +7,7 @@ import sys
 import logging
 import pymysql.cursors
 from datetime import datetime
-
+from scrapers import *
 
 #
 #
