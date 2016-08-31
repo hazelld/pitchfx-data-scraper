@@ -13,7 +13,7 @@ from scrapers.db import *
 #
 #
 #
-def gdt_scrape(date, source):
+def gd_scrape(date, source):
     global logger
 
     # Init the logger and db connection 

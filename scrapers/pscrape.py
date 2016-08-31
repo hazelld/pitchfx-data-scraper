@@ -8,7 +8,7 @@ import logging
 import pymysql.cursors
 import logging
 from datetime import datetime
-from scrapers.dscrape import *
+from scrapers.gd_scrape import *
 from scrapers.db import *
 
 #
