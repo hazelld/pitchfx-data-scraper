@@ -2,7 +2,13 @@ import logging
 import pymysql.cursors
 from scrapers import config
 
+
 def init_db():
+    '''
+        Initialize the globals for this module.
+
+        Returns False on error, True otherwise
+    '''
     global logger
     global db 
     global cur
@@ -20,15 +26,13 @@ def init_db():
     return True
 
 
-#   Insert into the database that is defined in config.py, rollback on 
-#   error.
-#
-#   Arguments:
-#       query => Text query to execute
-#       data  => Data to insert
-#
 def insert_db (query, data):
+    '''
+        Insert data into the database using the connection established in 
+        init_db(). If an error is encountered, rollback the database.
 
+        Return False on Error, otherwise return True.
+    '''
     try:
         cur.execute(query, data)
         db.commit()
@@ -39,12 +43,17 @@ def insert_db (query, data):
         return False
     return True
 
-#   Build the query string based on the database map defined
-#   in config.py
-#
-#   If the date and gid need to be added then manually add.
-def build_query (db_map, db_table, gid, date):
 
+def build_query (db_map, db_table, gid, date):
+    '''
+        Build the query based on the database map given. Since gid and
+        date are excluded from the maps, they must be manually added at 
+        the start.
+
+        Returns the query that will look like:
+
+        insert into db_table (x, y, z) values (%s, %s, %s)
+    '''
     query = "insert into " + db_table + "("
     val_query = " values ("
 
@@ -71,4 +80,7 @@ def build_query (db_map, db_table, gid, date):
 
 
 def get_last_id():
+    '''
+        Return the ID from the last item inserted. 
+    '''
     return cur.lastrowid

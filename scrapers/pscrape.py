@@ -11,11 +11,14 @@ from datetime import datetime
 from scrapers.gd_scrape import *
 from scrapers.db import *
 
-#
-#
-#
-def pscrape (current_date):
 
+
+def pscrape (current_date):
+    '''
+        Determine if there is a newer version to the player database. If there
+        is, then download and update the database. The last date updated is stored 
+        in the scrapers.cfg file.
+    '''
     logger = logging.getLogger(__name__)
     if init_db() == False: return False
 
@@ -34,8 +37,11 @@ def pscrape (current_date):
     else:
         print("No playerdb update available")
 
-#
+
 def update_player_db():
+    '''
+        Update the player database by getting the csv page and parsing it.
+    '''
     csv_file = get_page(pscrape_base + pscrape_data)
     if csv_file == False: return False
     
@@ -53,8 +59,11 @@ def update_player_db():
     return True
 
 
-#
 def get_last_update (page, logger):
+    '''
+        Return the datestring of the last update of the crunchtime player
+        csv file.
+    '''
     regex = re.compile("\(last update:.*?([0-9]+)", re.IGNORECASE)
     match = regex.findall(str(page))
     
@@ -62,6 +71,4 @@ def get_last_update (page, logger):
         logger.warning("Could not find the last date crunchtime player map was updated")
         return False
 
-    # Match now holds the date in the form: 
-    #   yymmdd
     return datetime.strptime(match[0], '%y%m%d')
