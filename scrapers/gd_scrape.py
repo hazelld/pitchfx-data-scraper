@@ -10,16 +10,25 @@ import datetime
 from scrapers.config import *
 from scrapers.db import *
 
-#
-#
-#
-def gd_scrape(date, source):
-    global logger
 
+def gd_scrape(date, source):
+    '''
+        This function is the entry point to this module. It takes a date and 
+        gets the mlb gameday data for that day and parses it into the database
+        through scrapers/db. The source argument designates where the files are
+        coming from:
+
+        'web' => Download the gameday files from the web
+
+        'disk'=> The files are already downloaded (from dl_gd.py) and are in 
+                 a file in the root directory named gd2.
+    '''
+    global logger
+    logger = logging.getLogger(__name__)
+    
     # Init the logger and db connection 
     if init_db() == False:
         return False
-    logger = logging.getLogger(__name__)
 
     # Either get the web pages from the website and put in a list of bs4 
     # objects, or open the files on disk into a list of bs4 objects.
@@ -31,18 +40,29 @@ def gd_scrape(date, source):
         logger.warning("Invalid argument to gdt_scrape: " + source)
         return False
 
+    # Don't need to log errors here as get_files_* will have already
     if xml == False: return False
 
     # Parse the xml files and add into the db 
     parse(xml, date)
 
 
+'''
+    get_files_web()
+    get_files_disk()
 
-#
-#
-#
-#
-#
+    Both these functions are used to get the needed gd2 xml files that are defined
+    in config.py (xml_files[]). They both take a date argument for the day to be 
+    parsed.
+
+    The return value is the same for both. It is list of dictionarys that holds the name 
+    of the file as the key, and the value is the BeautifulSoup parsed object. This list 
+    can then be used like:
+
+    game_list = get_files_*()
+    game_list[0]["ex_file"] -> BeautifulSoup object that corresponds to the first game
+                                of the day's xml file with the name "ex_file"
+'''
 def get_files_web(date):
     url = base_url+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
       
@@ -56,6 +76,7 @@ def get_files_web(date):
         full_url    = url + "/gid_" + link 
         games_parsed = {}
         
+        # Loop through the files we need to get
         for f in xml_files:
             page = get_page(full_url + f)
             if page == False: return False
@@ -66,7 +87,7 @@ def get_files_web(date):
 
     return games
 
-# 
+
 def get_files_disk(date):
     path = "gd2/year_"+str(date.year)+"/month_"+'%02d'%date.month+"/day_"+'%02d' % date.day
     
@@ -95,13 +116,11 @@ def get_files_disk(date):
     return games
 
 
-#   This function is used to parse the xml files for each day. It takes a 
-#   list that holds each game. Each list item is a dictionary that has the 
-#   name of the file, and the corresponding BeautifulSoup object. 
-#
-#   The files that will be parsed are defined in the config.py file
 def parse(game_xmls, date):
-      
+    '''
+        This function parses all the xml files for each day. The game_xmls var
+        is created with the get_files_* functions. 
+    '''
     for game in game_xmls:
         gid = parse_game(game[box], date, game_table, False)
         
@@ -113,15 +132,14 @@ def parse(game_xmls, date):
     
 
 
-#
-#   Get the game information from the boxscore xml page, and add it to
-#   the database. Ensure the game is not already in the database. If
-#   it is then return false.
-#
-#   If the game is added, return the gid value for future use
-#
 def parse_game ( soup, date, db_table, gid ):
+    '''
+        Get the game information from the boxscore xml page, and add it to
+        the database. Ensure the game is not already in the database. If
+        it is then return false.
 
+        If the game is added, return the gid value for future use
+    '''
     query = build_query(box_map + line_map, db_table, gid, date)
 
     box  = soup.find('boxscore')
@@ -136,11 +154,20 @@ def parse_game ( soup, date, db_table, gid ):
 
     return data[1]
 
-#
-#
-#
+
 def parse_gamestats ( soup, tag, pmap, db_table, gid, date):
-    
+    '''
+        Parse the game stats from the soup.
+
+        Arguments:
+            soup => BeautifulSoup Object to search
+            tag  => Tag to search for in the soup
+            pmap => Database map. See config.py for example
+            db_table => Database table to insert into
+            gid  => Game ID as returned from parse
+            date => Date of the game being parsed
+
+    '''
     query = build_query(pmap, db_table, True, True)
     tags  = soup.find_all(tag)
 
@@ -148,11 +175,14 @@ def parse_gamestats ( soup, tag, pmap, db_table, gid, date):
         data = build_data(i, pmap, gid, date)
         insert_db (query, data)
 
-#
-#
-#
+
 def parse_pitches ( soup, gid, date ):
-    
+    '''
+        Parse the pitchfx data from the innings/innings_all.xml. This function 
+        finds the atbat information, and the corresponding pitch data for the at
+        bat. It also gets other information such as the runners that are on base.
+
+    '''
     atbats   = soup.find_all('atbat')
     ab_query = build_query(ab_map, ab_table, True, True)
     p_query  = build_query(pitch_map, pitches_table, True, True)
@@ -168,18 +198,21 @@ def parse_pitches ( soup, gid, date ):
         abid = get_last_id()
 
         
-        # This info comes from ab tag, not pitch tag
+        # This info comes from ab tag, but is inserted into the pitch table
         outs = ab['o']
         pid  = ab['pitcher']
         bid  = ab['batter']
         balls = strikes = 0
 
         pitches = ab.find_all('pitch')
+
+        # Get all the pitches from the current atbat 
         for p in pitches:
             pdata = build_data(p, pitch_map, gid, date)
             pdata.extend([abid, balls, strikes, outs, pid, bid])
             insert_db(p_query, pdata)
             
+            # Need to manually keep track of the count
             if p['type'] == 'B':
                 balls = balls + 1
             elif p['type'] == 'S':
@@ -187,6 +220,13 @@ def parse_pitches ( soup, gid, date ):
         
 
 def parse_runners(tags):
+    '''
+        Parse all the <runner> tags from the <atbat> tags to get 
+        the information about the current runners on base for the atbat.
+
+        Return a list of the information so it may be appended to the running
+        list
+    '''
     r1 = r2 = r3 = rbi = 0
     
     for r in tags:
@@ -203,14 +243,26 @@ def parse_runners(tags):
 
     return [r1, r2, r3, rbi, r2+r3]
 
-#   Given a parsed xml tag, this builds a list of data from the db map.
+
 def build_data(tag, db_map, gid, date):
+    '''
+        This function takes a parsed xml tag (from a BeautifulSoup object) and
+        builds a list of the data from the database map. This function is used 
+        in conjunction with build_query (db.py) to be able to easily build the 
+        query and corresponding data.
+
+        Using these functions together also assures that the data and query is 
+        matched up, so values are not being inserted into the wrong table.
+    '''
     data = []
     if date: data.append(date)
     if gid: data.append(gid)
 
+    
     for item in db_map:
         try:
+
+            # Extract the data from the tag for corresponding item from db map
             data.append(tag[item[1]])
         except:
             
@@ -224,8 +276,10 @@ def build_data(tag, db_map, gid, date):
     return data
 
 
-#   Safely open the url that is passed to the function
 def get_page ( url ):
+    '''
+        Safely attempt to get the page at the given URL. Log any error.
+    '''
     try:
         f = urlopen(url)
     except:
@@ -234,17 +288,16 @@ def get_page ( url ):
     return f
 
 
-
-#   Get all the links off of the page:
-#       gd2.mlb.com/components/game/mlb/year/month/day/
-#   
-#   And finds the links for the games that have the following 
-#   format:
-#   
-#   gid_year_mm_dd_team1mlb_team2mlb   
-#
 def get_links ( url ):
-    
+    '''
+        Get all the links off of the page:
+        gd2.mlb.com/components/game/mlb/year/month/day/
+        
+        And finds the links for the games that have the following 
+        format:
+   
+        gid_year_mm_dd_team1mlb_team2mlb   
+    '''
     f = get_page (url)
     if f==False: return False
 
