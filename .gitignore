@@ -1,3 +1,6 @@
+# Ignore the downloaded gd2 files
+gd2/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
