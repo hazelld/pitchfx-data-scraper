@@ -2,7 +2,7 @@ import logging
 import pymysql.cursors
 from scrapers import config
 
-CACHE_LIMIT = 50
+CACHE_LIMIT = 1000
 
 def init_db():
     '''

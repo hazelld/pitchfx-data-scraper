@@ -54,7 +54,7 @@ def update_player_db():
     for row in reader:
         data = row[0:4] + row[5:7]
         query = build_query(player_map, player_table, False, False)
-        insert_db(query, data)
+        insert_db(query, data, False)
     
     return True
 
