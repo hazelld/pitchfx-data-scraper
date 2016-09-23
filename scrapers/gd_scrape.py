@@ -11,6 +11,7 @@ from scrapers.config import *
 from scrapers.db import *
 
 
+
 def gd_scrape(date, source):
     '''
         This function is the entry point to this module. It takes a date and 
@@ -107,7 +108,7 @@ def get_files_disk(date):
                 page = open(os.path.join(npath, f), "r")
             except:
                 logger.warning("Could not open file: " + os.path.join(npath, f))
-                continue
+                return False
             
             games_parsed[f] = BeautifulSoup(page, "lxml")
 
@@ -149,7 +150,7 @@ def parse_game ( soup, date, db_table, gid ):
     data = data + build_data(box, box_map, False, False)
     data = data + build_data(line, line_map, False, False)
     
-    if insert_db(query, data) == False:
+    if insert_db(query, data, True) == False:
         return False
 
     return data[1]
@@ -173,7 +174,7 @@ def parse_gamestats ( soup, tag, pmap, db_table, gid, date):
 
     for i in tags:
         data = build_data(i, pmap, gid, date)
-        insert_db (query, data)
+        insert_db (query, data, False)
 
 
 def parse_pitches ( soup, gid, date ):
@@ -194,7 +195,7 @@ def parse_pitches ( soup, gid, date ):
         data.extend(parse_runners(ab.find_all('runner')))
 
         # Insert data, get the abid key back
-        insert_db(ab_query, data)
+        insert_db(ab_query, data, True)
         abid = get_last_id()
 
         
@@ -210,7 +211,7 @@ def parse_pitches ( soup, gid, date ):
         for p in pitches:
             pdata = build_data(p, pitch_map, gid, date)
             pdata.extend([abid, balls, strikes, outs, pid, bid])
-            insert_db(p_query, pdata)
+            insert_db(p_query, pdata, False)
             
             # Need to manually keep track of the count
             if p['type'] == 'B':
@@ -254,6 +255,7 @@ def build_data(tag, db_map, gid, date):
         Using these functions together also assures that the data and query is 
         matched up, so values are not being inserted into the wrong table.
     '''
+    logger = logging.getLogger(__name__)
     data = []
     if date: data.append(date)
     if gid: data.append(gid)
@@ -280,6 +282,7 @@ def get_page ( url ):
     '''
         Safely attempt to get the page at the given URL. Log any error.
     '''
+    logger = logging.getLogger(__name__)
     try:
         f = urlopen(url)
     except:

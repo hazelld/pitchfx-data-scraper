@@ -2,6 +2,7 @@ import logging
 import pymysql.cursors
 from scrapers import config
 
+CACHE_LIMIT = 50
 
 def init_db():
     '''
@@ -12,7 +13,11 @@ def init_db():
     global logger
     global db 
     global cur
+    global insert_list
+    global cached_count
 
+    insert_list = []
+    cached_count = 0
     logger = logging.getLogger(__name__)
     
     try:
@@ -26,21 +31,50 @@ def init_db():
     return True
 
 
-def insert_db (query, data):
+def insert_db (query, data, need_result):
     '''
         Insert data into the database using the connection established in 
-        init_db(). If an error is encountered, rollback the database.
+        init_db(). If an error is encountered, rollback the database. If need_result 
+        is true, then the data is inserted immediately. If it is false the data will
+        be grouped before the insert for efficiency.
 
         Return False on Error, otherwise return True.
     '''
+    global cached_count
+    global insert_list
+    
+    ins = (query, data)
+    cached_count += 1
+    insert_list.append((query, data))
+
+    if need_result == True or cached_count > CACHE_LIMIT:
+        result = _insert(insert_list)
+        del insert_list[:]
+        insert_list = []
+        cached_count = 0
+        return result
+
+def _insert (insert_list):
+    '''
+        Actually insert data into the database, not to be called externally.
+    '''
+    
+    for i in insert_list:
+        try:
+            cur.execute(i[0], i[1])
+        except pymysql.Error as e:
+            logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
+            db.rollback
+            return False
+    
+    # Commit changes to db
     try:
-        cur.execute(query, data)
         db.commit()
     except pymysql.Error as e:
         logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
-        logger.warning('Previous error occured with data: ' + str(data[1]))
         db.rollback
         return False
+
     return True
 
 
