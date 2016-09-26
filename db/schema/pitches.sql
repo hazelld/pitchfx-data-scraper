@@ -5,7 +5,7 @@ create table pitches (
 	pid int not null,
 	bid int not null,
 	gid varchar(30) not null,
-	abid varchar(64) not null,
+	abid bigint not null,
 	des varchar(30),
 	result char(1) not null,
 	balls int not null,

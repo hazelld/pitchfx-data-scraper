@@ -1,5 +1,6 @@
 create table atbats (
-	abid varchar(64) not null,
+	abid bigint not null,
+	play_guid varchar(64),
 	game_date date not null,
 	gid varchar(30) not null,
 	bid int not null,

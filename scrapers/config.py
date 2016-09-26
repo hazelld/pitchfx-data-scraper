@@ -136,7 +136,7 @@ pitch_map = (   ('play_guid', 'play_guid'),
                 ('bid', ''))
 
 # At bat info 
-ab_map = (  ('abid','play_guid'),
+ab_map = (  ('play_guid','play_guid'),
             ('bid','batter'),
             ('pid','pitcher'),
             ('abno','num'),
@@ -147,6 +147,7 @@ ab_map = (  ('abid','play_guid'),
             ('event','event'),
             ('home_runs','home_team_runs'),
             ('away_runs','away_team_runs'),
+            ('abid',''),
             ('runner_first',''),
             ('runner_second',''),
             ('runner_third',''),

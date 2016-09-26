@@ -132,3 +132,6 @@ def get_last_id():
         Return the ID from the last item inserted. 
     '''
     return cur.lastrowid
+    #cur.execute("SELECT LAST_INSERT_ID()")
+    #print(str(cur.fetchone()))
+    

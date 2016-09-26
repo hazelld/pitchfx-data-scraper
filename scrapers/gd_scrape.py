@@ -194,19 +194,24 @@ def parse_pitches ( soup, gid, date ):
     for ab in atbats:
         data = build_data(ab, ab_map, gid, date)
         
-        # If the atbat ID isn't here, then the inning finished without the atbat 
-        # finishing, such as when a pickoff occurs. For now just ignore these
-        if data[2] == 0:
-            logger.warning("Missing abid...Skipping")
-            print("Data that doesn't have abid: " + str(data))
-            continue
+        '''
+            The atbat and pitches table relationship posed a problem. Either bottleneck
+            the scraper by having to solo insert the atbat, then use the auto_increment 
+            id for the pitch insertion. Or, use a field in the atbat tag. Since the play_guid
+            is not present in _every_ atbat tag, I decided to create a value by hashing 
+            some of the info _always_ present.
 
-        # Get runners on base
+            This cuts down on the trips to database, but also ensures every atbat has an id.
+        '''
+        abid = hash(ab['batter'] + ab['start_tfs_zulu'] + ab['pitcher'])
+        
+        # Add the extra data not in the ab_map
+        data.append(abid)
         data.extend(parse_runners(ab.find_all('runner')))
-        insert_db(ab_query, data, False)
 
+        insert_db(ab_query, data, False)
+        
         # This info comes from ab tag, but is inserted into the pitch table
-        abid = ab['play_guid']
         outs = ab['o']
         pid  = ab['pitcher']
         bid  = ab['batter']
