@@ -1,16 +1,13 @@
 #!/usr/bin/python
 
 from datetime import timedelta, date
-from scrapers.dscrape import get_page, get_links, init_globs
+from scrapers.gd_scrape import *
 from scrapers.config import *
 import os
 
 start_date = date(2016, 4, 1)
 end_date   = date(2016, 10, 1)
 base_dir   = "gd2/"
-
-if init_globs(start_date) == False:
-    print("Couldn't set up globals")
 
 #
 def daterange (start, end):
