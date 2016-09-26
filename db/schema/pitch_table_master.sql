@@ -1,10 +1,11 @@
 create table pitches (
 	game_date date not null,
+	play_guid varchar(64),
 	sv_id varchar(30),
 	pid int not null,
 	bid int not null,
 	gid varchar(30) not null,
-	abid int not null,
+	abid varchar(64) not null,
 	des varchar(30),
 	result char(1) not null,
 	balls int not null,

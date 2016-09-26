@@ -1,5 +1,5 @@
 create table atbats (
-	abid int not null auto_increment,
+	abid varchar(64) not null,
 	game_date date not null,
 	gid varchar(30) not null,
 	bid int not null,
