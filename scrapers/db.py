@@ -54,18 +54,32 @@ def insert_db (query, data, need_result):
         cached_count = 0
         return result
 
+def flush_db ():
+    '''
+        This function will bulk insert all cached items. This should be called 
+        before the program is finished to ensure all items are added to the database
+        and not just cached
+    '''
+    global cached_count
+    global insert_list
+
+    result = _insert(insert_list)
+    cached_count = 0
+    insert_list = []
+    return result
+
 def _insert (insert_list):
     '''
-        Actually insert data into the database, not to be called externally.
+        Bulk inserts all cached items into the database.
     '''
     
     for i in insert_list:
         try:
             cur.execute(i[0], i[1])
         except pymysql.Error as e:
-            logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]))
-            db.rollback
-            return False
+            logger.warning('Got error {!r}, errno is {}'.format(e, e.args[0]) + 
+                            "Data that caused the issue: " + str(i[0]) + str(i[1]))
+            continue
     
     # Commit changes to db
     try:

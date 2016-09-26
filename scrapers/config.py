@@ -99,7 +99,8 @@ pitcher_map = ( ('pid', 'id'),
 
 
 # Pitchfx data map
-pitch_map = (   ('sv_id', 'sv_id'),
+pitch_map = (   ('play_guid', 'play_guid'),
+                ('sv_id', 'sv_id'),
                 ('des', 'des'),
                 ('result', 'type'),
                 ('start_speed', 'start_speed'),
@@ -135,7 +136,8 @@ pitch_map = (   ('sv_id', 'sv_id'),
                 ('bid', ''))
 
 # At bat info 
-ab_map = (  ('bid','batter'),
+ab_map = (  ('abid','play_guid'),
+            ('bid','batter'),
             ('pid','pitcher'),
             ('abno','num'),
             ('des','des'),

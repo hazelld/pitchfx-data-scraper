@@ -47,6 +47,9 @@ def gd_scrape(date, source):
     # Parse the xml files and add into the db 
     parse(xml, date)
 
+    # Clear the db cache to ensure all data makes it to db
+    flush_db()
+
 
 '''
     get_files_web()
@@ -169,7 +172,7 @@ def parse_gamestats ( soup, tag, pmap, db_table, gid, date):
             date => Date of the game being parsed
 
     '''
-    query = build_query(pmap, db_table, True, True)
+    query = build_query(pmap, db_table, gid, date)
     tags  = soup.find_all(tag)
 
     for i in tags:
@@ -191,20 +194,24 @@ def parse_pitches ( soup, gid, date ):
     for ab in atbats:
         data = build_data(ab, ab_map, gid, date)
         
+        # If the atbat ID isn't here, then the inning finished without the atbat 
+        # finishing, such as when a pickoff occurs. For now just ignore these
+        if data[2] == 0:
+            logger.warning("Missing abid...Skipping")
+            print("Data that doesn't have abid: " + str(data))
+            continue
+
         # Get runners on base
         data.extend(parse_runners(ab.find_all('runner')))
+        insert_db(ab_query, data, False)
 
-        # Insert data, get the abid key back
-        insert_db(ab_query, data, True)
-        abid = get_last_id()
-
-        
         # This info comes from ab tag, but is inserted into the pitch table
+        abid = ab['play_guid']
         outs = ab['o']
         pid  = ab['pitcher']
         bid  = ab['batter']
         balls = strikes = 0
-
+    
         pitches = ab.find_all('pitch')
 
         # Get all the pitches from the current atbat 
@@ -273,7 +280,6 @@ def build_data(tag, db_map, gid, date):
             # then don't add a default value. Value will be added manually.
             if item[1] != '':
                 data.append(0)
-                logger.warning("No data associated with: " + item[1])
     
     return data
 
