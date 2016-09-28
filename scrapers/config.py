@@ -1,3 +1,4 @@
+import sys
 import collections
 import logging
 import pymysql.cursors
@@ -18,22 +19,19 @@ xml_files  = (ab_pitches, bis_box, box)
 pscrape_base = "http://crunchtimebaseball.com/"
 pscrape_home = "baseball_map.html"
 pscrape_data = "master.csv"
+
+# Config file options
 pscrape_opts = "PlayerScraper"
 pscrape_last_update = "LastUpdate"
 
 #   Database info 
-db_name              = "mlb_stats"
+db_opts = "Database"
 batter_gameday_table = "gamestats_batter"
 pitch_gameday_table  = "gamestats_pitcher"
 pitches_table        = "pitches"
 game_table           = "games"
 ab_table             = "atbats"
 player_table         = "players"
-
-db_host   = "localhost"
-db_user   = "whaze"
-db_passwd = ""
-
 
 
 
@@ -185,3 +183,31 @@ def update_last_playerdb_update( date ):
     with open(config_file, 'w') as configfile:
         Config.write(configfile)
 
+
+def get_db_config():
+    '''
+        This function returns a dict with the database configuration. The keys are the
+        following:
+
+        'host'  => Host of database
+        'user'  => Database User
+        'passwd'=> Database password. Blank if none provided
+    '''
+    Config = configparser.ConfigParser()
+    Config.read(config_file)
+    db = {}
+
+    try:
+        db['host'] = Config.get("Database", "Host")
+        db['user'] = Config.get("Database", "User")
+        db['db_name'] = Config.get("Database", "DB_Name")
+    except:
+        print("Error getting host & user information from " + config_file)
+        sys.exit()
+
+    try:
+        db['passwd'] = Config.get("Database", "Password")
+    except:
+        db['passwd'] = ""
+
+    return db

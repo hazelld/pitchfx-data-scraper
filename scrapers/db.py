@@ -20,9 +20,11 @@ def init_db():
     cached_count = 0
     logger = logging.getLogger(__name__)
     
+    db_info = config.get_db_config()
+
     try:
-        db  = pymysql.connect(host=config.db_host, user=config.db_user, \
-                              passwd=config.db_passwd, db=config.db_name)
+        db  = pymysql.connect(host=db_info['host'], user=db_info['user'], \
+               passwd=db_info['passwd'], db=db_info['db_name'])
         cur = db.cursor()
     except:
         logger.error("Could not connect to database.")
