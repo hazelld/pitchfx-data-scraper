@@ -1,5 +1,6 @@
 # Ignore the downloaded gd2 files
 gd2/
+scrapers/scrapers.cfg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
