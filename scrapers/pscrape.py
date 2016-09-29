@@ -33,10 +33,10 @@ def pscrape (current_date):
         
         if did_update:
             update_last_playerdb_update(newest_update)
-            print("Successfully updated playerdb")
+            print("Successfully updated player database")
             flush_db()
     else:
-        print("No playerdb update available")
+        print("No player database update available.")
 
 
 def update_player_db():

@@ -15,13 +15,14 @@ def init_db():
     global cur
     global insert_list
     global cached_count
+    global db_name
 
     insert_list = []
     cached_count = 0
     logger = logging.getLogger(__name__)
     
     db_info = config.get_db_config()
-
+    
     try:
         db  = pymysql.connect(host=db_info['host'], user=db_info['user'], \
                passwd=db_info['passwd'], db=db_info['db_name'])
@@ -30,6 +31,7 @@ def init_db():
         logger.error("Could not connect to database.")
         return False
     
+    db_name = db_info['db_name']
     return True
 
 
@@ -129,11 +131,36 @@ def build_query (db_map, db_table, gid, date):
     return query
 
 
+def check_tables():
+    '''
+        This function checks if all the tables defined in the config file 
+        are available in the database. If they are, then return true, and 
+        if they are not then return false.
+    '''
+    return False
+
+
+def get_newest_schema():
+    '''
+        Check the db/schema/ folder for the most recent database schema file based on 
+        the numerical ordering. The names are in the form:
+
+        xxxx_schema.sql
+
+    '''
+    prefix = "db/schema/"
+    return prefix + "0001_schema.sql"
+
 def get_last_id():
     '''
         Return the ID from the last item inserted. 
     '''
     return cur.lastrowid
-    #cur.execute("SELECT LAST_INSERT_ID()")
-    #print(str(cur.fetchone()))
     
+
+def get_name():
+    ''' 
+        Return name of currently used database
+    '''
+    global db_name
+    return db_name

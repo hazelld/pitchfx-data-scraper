@@ -211,3 +211,28 @@ def get_db_config():
         db['passwd'] = ""
 
     return db
+
+
+def make_config_file():
+    Config = configparser.ConfigParser()
+
+    Config.add_section(pscrape_opts)
+    Config.set(pscrape_opts, pscrape_last_update, datetime.min.strftime("%y%m%d"))
+
+    print("Please enter database name: ")
+    name = input()
+    print("Please enter database host: ")
+    host = input()
+    print("Please enter database user: ")
+    user = input()
+    print("Please enter database password: ")
+    passwd = input()
+    
+    Config.add_section("Database")
+    Config.set("Database", "DB_Name", name)
+    Config.set("Database", "Host", host)
+    Config.set("Database", "User", user)
+    Config.set("Database", "Password", passwd)
+
+    with open(config_file, 'w') as configfile:
+        Config.write(configfile)
