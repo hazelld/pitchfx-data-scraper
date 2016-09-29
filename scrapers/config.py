@@ -50,19 +50,19 @@ player_table         = "players"
 #   two maps
 box_map =(  ('gid','game_id'),
             ('vid','venue_id'),
-            ('home_team','home_team_code'),
-            ('away_team','away_team_code'),
-            ('h_losses','home_loss'),
-            ('h_wins','home_wins'),
-            ('a_losses','away_loss'),
-            ('a_wins','away_wins') )
+            ('home_team_id','home_team_code'),
+            ('away_team_id','away_team_code'),
+            ('home_loss','home_loss'),
+            ('home_wins','home_wins'),
+            ('away_loss','away_loss'),
+            ('away_wins','away_wins') )
 
-line_map =( ('h_hits','home_team_hits'),
-            ('h_runs','home_team_runs'),
-            ('h_errors','home_team_errors'),
-            ('a_hits','away_team_hits'),
-            ('a_runs','away_team_runs'),
-            ('a_errors','away_team_errors'))
+line_map =( ('home_hits','home_team_hits'),
+            ('home_runs','home_team_runs'),
+            ('home_errors','home_team_errors'),
+            ('away_hits','away_team_hits'),
+            ('away_runs','away_team_runs'),
+            ('away_errors','away_team_errors'))
 
 
 # Batter Gameday stats
