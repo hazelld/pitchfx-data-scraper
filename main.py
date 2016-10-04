@@ -9,6 +9,15 @@ import os.path
 import os
 import sys
 
+def daterange (start, end):
+    ''' 
+        This function allows for iteration over a date range
+        defined by start and end arguments
+    '''
+    for n in range(int ((end-start).days)):
+        yield start + timedelta(n)
+
+
 #   Set up the logger
 logging.basicConfig(filename="mlb.log", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -42,12 +51,9 @@ pscrape.pscrape(todays_date)
 # Get the lastest date of game
 # Ask if they would like to update the databases until today
 # Ask if web or disk download
+start = datetime.datetime(2016,4,1)
+end = datetime.datetime(2016,5,1)
 
+for i in daterange(start,end):
+    gd_scrape.gd_scrape(i, "disk")
 
-def daterange (start, end):
-    ''' 
-        This function allows for iteration over a date range
-        defined by start and end arguments
-    '''
-    for n in range(int ((end-start).days)):
-        yield start + timedelta(n)
