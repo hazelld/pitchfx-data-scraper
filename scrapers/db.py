@@ -137,7 +137,19 @@ def check_tables():
         are available in the database. If they are, then return true, and 
         if they are not then return false.
     '''
-    return False
+    ret = True
+    cur.execute("SHOW tables")
+    tables = cur.fetchall()
+    
+    # fetchall() returns list of tuples, so need to flatten
+    tables = [i[0] for i in tables]
+    
+    for i in config.table_list:
+        if i not in tables:    
+            print("Could not find table: " + i)
+            ret = False
+
+    return ret
 
 
 def get_newest_schema():
@@ -164,3 +176,10 @@ def get_name():
     '''
     global db_name
     return db_name
+
+
+def get_latest_date():
+    '''
+        Get the latest date of data that is currently in the database
+    '''
+

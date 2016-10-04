@@ -26,12 +26,15 @@ pscrape_last_update = "LastUpdate"
 
 #   Database info 
 db_opts = "Database"
+
 batter_gameday_table = "gamestats_batter"
 pitch_gameday_table  = "gamestats_pitcher"
 pitches_table        = "pitches"
 game_table           = "games"
 ab_table             = "atbats"
 player_table         = "players"
+table_list = (  batter_gameday_table, pitch_gameday_table, pitches_table, 
+                game_table, ab_table, player_table)
 
 
 
