@@ -22,7 +22,7 @@ def daterange (start, end):
 logging.basicConfig(filename="mlb.log", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-todays_date = time.strftime("%d%m%Y")
+todays_date = datetime.datetime.now().date()
 
 # Check if the config file exists, if not get the db info manually
 if os.path.isfile(config.config_file) == False:
@@ -51,9 +51,10 @@ pscrape.pscrape(todays_date)
 # Get the lastest date of game
 # Ask if they would like to update the databases until today
 # Ask if web or disk download
-start = datetime.datetime(2016,4,1)
-end = datetime.datetime(2016,5,1)
+start = db.get_latest_date()
+print("Latest data found is: " + str(start))
 
-for i in daterange(start,end):
+
+for i in daterange(start,todays_date):
     gd_scrape.gd_scrape(i, "disk")
 

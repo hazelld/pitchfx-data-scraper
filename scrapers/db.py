@@ -182,4 +182,6 @@ def get_latest_date():
     '''
         Get the latest date of data that is currently in the database
     '''
-
+    cur.execute("SELECT MAX(game_date) FROM games")
+    date = cur.fetchone()
+    return date[0]
