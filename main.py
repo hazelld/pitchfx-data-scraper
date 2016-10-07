@@ -1,7 +1,7 @@
 #!/bin/python
 
 import logging
-from scrapers import pscrape, gd_scrape, config, db
+from scrapers import dl_gd, pscrape, gd_scrape, config, db
 from datetime import timedelta
 import datetime
 import time
@@ -16,6 +16,24 @@ def daterange (start, end):
     '''
     for n in range(int ((end-start).days)):
         yield start + timedelta(n)
+
+def get_date_from_user():
+    '''
+        Get user input to build a datetime object. This will be used
+        as the starting date of the scraping.
+
+        TODO: Move to date.py?
+    '''
+    print("Please enter date in form: year-month-day")
+    uin = input()
+
+    try:
+        start = datetime.datetime.strptime(uin, '%Y-%m-%d').date()
+    except ValueError:
+        print("Incorrect format. Please try again.")
+        return get_date_from_user()
+
+    return start
 
 
 #   Set up the logger
@@ -52,9 +70,22 @@ pscrape.pscrape(todays_date)
 # Ask if they would like to update the databases until today
 # Ask if web or disk download
 start = db.get_latest_date()
-print("Latest data found is: " + str(start))
 
+if isinstance(start, datetime.date):
+    print("Latest data found is: " + str(start))
+else:
+    print("Could not get latest data date from database. Please enter a starting date:")
+    start = get_date_from_user()    
+
+scrape_type = "web"
+print("Would you like to save the xml files locally before they are parsed (Recommended)? [y/n]")
+uin = input()
+
+if uin == "y":
+    scrape_type = "disk"
+    dl_gd.download(start, todays_date)
+        
 
 for i in daterange(start,todays_date):
-    gd_scrape.gd_scrape(i, "disk")
+    gd_scrape.gd_scrape(i, scrape_type)
 
