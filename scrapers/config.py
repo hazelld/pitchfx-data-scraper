@@ -152,8 +152,8 @@ ab_map = (  ('play_guid','play_guid'),
             ('runner_first',''),
             ('runner_second',''),
             ('runner_third',''),
-            ('risp',''),
-            ('rbi',''))
+            ('rbi',''),
+            ('risp',''))
 
 # Players database, its here so build_query may be called
 player_map=(('pid', ''),
