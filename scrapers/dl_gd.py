@@ -24,14 +24,14 @@ def download (start_date, end_date):
     '''
     for sd in daterange(start_date, end_date):
         
-        ext     = str(sd.year)+"/month_"+'%02d'%sd.month+"/day_"+'%02d' % sd.day + "/"
+        ext     = str(sd.year)+"/month_"+'%02d'%sd.month+"/day_"+'%02d' % sd.day 
         url     = base_url + ext
         new_dir = base_dir + "year_" + ext 
         games   = get_links(url)
 
         for game in games:
-            path     = new_dir + game
-            game_url = url + "gid_" + game
+            path     = new_dir + "/" + game
+            game_url = url + "/gid_" + game
 
             if not os.path.exists(path):
                 os.makedirs(path + "inning")

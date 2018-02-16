@@ -3,6 +3,7 @@
 import logging
 import re
 import os
+import sys
 from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 from urllib.request import urlopen
@@ -100,7 +101,6 @@ def get_files_disk(date):
     except:
         logger.error("Path does not exist: " + path)
         return False
-
     games = []
     for link in links:
         games_parsed = {}
@@ -314,17 +314,18 @@ def get_links ( url ):
     '''
     f = get_page (url)
     if f==False: return False
-
+    
     # Compile the regex to match links outside of the loop for 
     # performance
     links = []
-    regex = re.compile("\"gid_(.*?)\"", re.IGNORECASE)
+    regex = re.compile("\".*?gid_(.*?)\"", re.IGNORECASE)
     
     # Find all links on page and if they are links to games then add to list
     for link in BeautifulSoup(f, "lxml",parse_only=SoupStrainer('a', href=True) ):
         match = regex.findall(str(link))
+        
         if match:
-           links.extend(match)
-    
+            links.extend(match)
+   
     return links
 
